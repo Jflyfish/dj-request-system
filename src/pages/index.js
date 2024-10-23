@@ -10,8 +10,17 @@ import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
-  Music, LockKeyhole, Send, PlayCircle, CheckCircle2, XCircle,
-  Clock, DollarSign, Calendar, Users, BarChart, LogOut
+  Music,
+  LockKeyhole,
+  Send,
+  PlayCircle,
+  CheckCircle2,
+  XCircle,
+  Clock,
+  DollarSign,
+  Calendar,
+  Users,
+  BarChart
 } from 'lucide-react';
 
 // Initialize Supabase client
