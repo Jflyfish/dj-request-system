@@ -20,6 +20,16 @@ const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 );
 
+// Adding declarations for the new user signup
+const [isRegistering, setIsRegistering] = useState(false);
+const [registerData, setRegisterData] = useState({
+  email: '',
+  password: '',
+  confirmPassword: ''
+});
+
+//end edit
+
 export default function Home() {
   const [isDjView, setIsDjView] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -50,6 +60,33 @@ export default function Home() {
       fetchRequests(activeEvent.id);
     }
   }, [activeEvent]);
+
+  //new user function addddddddddddddddd
+const handleRegister = async (e) => {
+  e.preventDefault();
+  
+  if (registerData.password !== registerData.confirmPassword) {
+    setMessage('Passwords do not match');
+    return;
+  }
+
+  try {
+    const { data, error } = await supabase.auth.signUp({
+      email: registerData.email,
+      password: registerData.password
+    });
+
+    if (error) throw error;
+
+    setMessage('Registration successful! Please check your email for verification.');
+    setIsRegistering(false);
+  } catch (error) {
+    setMessage(error.message);
+  }
+};
+
+  //end
+  
 
   async function checkUser() {
     try {
@@ -347,29 +384,107 @@ export default function Home() {
             </CardHeader>
             <CardContent>
               {!isLoggedIn ? (
-                <form onSubmit={handleDjLogin} className="space-y-4 max-w-md mx-auto">
-                  <div>
-                    <Label htmlFor="email">Email</Label>
-                    <Input
-                      id="email"
-                      type="email"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      placeholder="Enter your email"
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="password">Password</Label>
-                    <Input
-                      id="password"
-                      type="password"
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      placeholder="Enter your password"
-                    />
-                  </div>
-                  <Button type="submit" className="w-full">Login</Button>
-                </form>
+  <div className="space-y-4 max-w-md mx-auto">
+    {!isRegistering ? (
+      // Login Form
+      <>
+        <form onSubmit={handleDjLogin} className="space-y-4">
+          <div>
+            <Label htmlFor="email">Email</Label>
+            <Input
+              id="email"
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="Enter your email"
+              required
+            />
+          </div>
+          <div>
+            <Label htmlFor="password">Password</Label>
+            <Input
+              id="password"
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="Enter your password"
+              required
+            />
+          </div>
+          <Button type="submit" className="w-full">Login</Button>
+        </form>
+        
+        <div className="relative my-6">
+          <div className="absolute inset-0 flex items-center">
+            <span className="w-full border-t" />
+          </div>
+          <div className="relative flex justify-center text-xs uppercase">
+            <span className="bg-background px-2 text-muted-foreground">
+              Or
+            </span>
+          </div>
+        </div>
+
+        <Button 
+          type="button" 
+          variant="outline" 
+          className="w-full"
+          onClick={() => setIsRegistering(true)}
+        >
+          Create New DJ Account
+        </Button>
+      </>
+    ) : (
+      // Registration Form
+      <>
+        <form onSubmit={handleRegister} className="space-y-4">
+          <div>
+            <Label htmlFor="registerEmail">Email</Label>
+            <Input
+              id="registerEmail"
+              type="email"
+              value={registerData.email}
+              onChange={(e) => setRegisterData({ ...registerData, email: e.target.value })}
+              placeholder="Enter your email"
+              required
+            />
+          </div>
+          <div>
+            <Label htmlFor="registerPassword">Password</Label>
+            <Input
+              id="registerPassword"
+              type="password"
+              value={registerData.password}
+              onChange={(e) => setRegisterData({ ...registerData, password: e.target.value })}
+              placeholder="Create a password"
+              required
+              minLength={6}
+            />
+          </div>
+          <div>
+            <Label htmlFor="confirmPassword">Confirm Password</Label>
+            <Input
+              id="confirmPassword"
+              type="password"
+              value={registerData.confirmPassword}
+              onChange={(e) => setRegisterData({ ...registerData, confirmPassword: e.target.value })}
+              placeholder="Confirm your password"
+              required
+            />
+          </div>
+          <Button type="submit" className="w-full">Register</Button>
+          <Button 
+            type="button" 
+            variant="outline" 
+            className="w-full"
+            onClick={() => setIsRegistering(false)}
+          >
+            Back to Login
+          </Button>
+        </form>
+      </>
+    )}
+  </div>
               ) : (
                 <DjDashboard />
               )}
