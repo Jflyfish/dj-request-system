@@ -1,6 +1,6 @@
-'use client';
 
 import React from 'react';
+  // Add this with other lucide imports
 import { useState, useEffect } from 'react';
 import { createClient } from '@supabase/supabase-js';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -23,7 +23,8 @@ import {
   DollarSign,
   Calendar,
   Users,
-  BarChart
+  BarChart,
+  LogOut
 } from 'lucide-react';
 
 // Initialize Supabase client
@@ -32,32 +33,14 @@ const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 );
 
-function HomePage() {
-  // All your useState declarations
-  const [isDjView, setIsDjView] = useState(false);
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [isRegistering, setIsRegistering] = useState(false);
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [registerData, setRegisterData] = useState({
-    email: '',
-    password: '',
-    confirmPassword: ''
-  });
-  const [activeEvent, setActiveEvent] = useState(null);
-  const [events, setEvents] = useState([]);
-  const [requests, setRequests] = useState([]);
-  const [message, setMessage] = useState('');
-  const [newRequest, setNewRequest] = useState({
-    songName: '',
-    artist: '',
-    specialRequest: '',
-    tipAmount: 0
-  });
 
-//end edit
 
 export default function Home() {
+  const [isRegistering, setIsRegistering] = useState(false);
+  const [registerData, setRegisterData] = useState({
+  email: '',
+  password: '',
+  confirmPassword: ''});
   const [isDjView, setIsDjView] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [user, setUser] = useState(null);
