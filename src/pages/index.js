@@ -1,4 +1,7 @@
-import React, { useState, useEffect } from 'react';
+'use client';
+
+import React from 'react';
+import { useState, useEffect } from 'react';
 import { createClient } from '@supabase/supabase-js';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -29,13 +32,28 @@ const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 );
 
-// Adding declarations for the new user signup
-const [isRegistering, setIsRegistering] = useState(false);
-const [registerData, setRegisterData] = useState({
-  email: '',
-  password: '',
-  confirmPassword: ''
-});
+function HomePage() {
+  // All your useState declarations
+  const [isDjView, setIsDjView] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [isRegistering, setIsRegistering] = useState(false);
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [registerData, setRegisterData] = useState({
+    email: '',
+    password: '',
+    confirmPassword: ''
+  });
+  const [activeEvent, setActiveEvent] = useState(null);
+  const [events, setEvents] = useState([]);
+  const [requests, setRequests] = useState([]);
+  const [message, setMessage] = useState('');
+  const [newRequest, setNewRequest] = useState({
+    songName: '',
+    artist: '',
+    specialRequest: '',
+    tipAmount: 0
+  });
 
 //end edit
 
