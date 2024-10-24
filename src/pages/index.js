@@ -56,6 +56,12 @@ export default function Home() {
     specialRequest: '',
     tipAmount: 0
   });
+  // Add this with your other useState declarations
+const [newEvent, setNewEvent] = useState({
+  name: '',
+  date: '',
+  description: ''
+  });
   const [message, setMessage] = useState('');
 
   // Check for existing session on load
@@ -161,6 +167,30 @@ const handleRegister = async (e) => {
       setMessage(error.message);
     }
   }
+  async function handleCreateEvent(e) {
+  e.preventDefault();
+  try {
+    const { data, error } = await supabase
+      .from('events')
+      .insert([{
+        name: newEvent.name,
+        date: newEvent.date,
+        description: newEvent.description,
+        dj_id: user.id
+      }])
+      .select();
+
+    if (error) throw error;
+    
+    setEvents([...events, data[0]]);
+    setNewEvent({ name: '', date: '', description: '' });
+    setMessage('Event created successfully!');
+  } catch (error) {
+    console.error('Error creating event:', error.message);
+    setMessage('Error creating event');
+  }
+}
+  
 
   async function handleLogout() {
     try {
@@ -234,6 +264,46 @@ const handleRegister = async (e) => {
 
   const DjDashboard = () => (
     <div className="space-y-6">
+      {/* Add this Card component at the top of DjDashboard */}
+    <Card>
+      <CardHeader>
+        <CardTitle>Create New Event</CardTitle>
+      </CardHeader>
+      <CardContent>
+        <form onSubmit={handleCreateEvent} className="space-y-4">
+          <div>
+            <Label htmlFor="eventName">Event Name</Label>
+            <Input
+              id="eventName"
+              value={newEvent.name}
+              onChange={(e) => setNewEvent({ ...newEvent, name: e.target.value })}
+              placeholder="Enter event name"
+              required
+            />
+          </div>
+          <div>
+            <Label htmlFor="eventDate">Event Date</Label>
+            <Input
+              id="eventDate"
+              type="datetime-local"
+              value={newEvent.date}
+              onChange={(e) => setNewEvent({ ...newEvent, date: e.target.value })}
+              required
+            />
+          </div>
+          <div>
+            <Label htmlFor="eventDescription">Description</Label>
+            <Textarea
+              id="eventDescription"
+              value={newEvent.description}
+              onChange={(e) => setNewEvent({ ...newEvent, description: e.target.value })}
+              placeholder="Event description"
+            />
+          </div>
+          <Button type="submit">Create Event</Button>
+        </form>
+      </CardContent>
+    </Card>
       {/* Event Selection and Header */}
       <div className="flex justify-between items-center">
         <Select 
@@ -501,67 +571,105 @@ const handleRegister = async (e) => {
             </CardContent>
           </Card>
         ) : (
-          <Card className="border-t-4 border-t-purple-600">
+       <Card className="border-t-4 border-t-purple-600">
             <CardHeader>
               <CardTitle>Request a Song</CardTitle>
-              <CardDescription>
-                Fill out the form below to submit your song request
-                {activeEvent && ` for ${activeEvent.name}`}
-              </CardDescription>
+              <CardDescription>Select an event and submit your request</CardDescription>
             </CardHeader>
             <CardContent>
-              <form onSubmit={handleNewRequest} className="space-y-4 max-w-md mx-auto">
-                <div>
-                  <Label htmlFor="songName">Song Name</Label>
-                  <Input
-                    id="songName"
-                    value={newRequest.songName}
-                    onChange={(e) => setNewRequest({...newRequest, songName: e.target.value})}
-                    placeholder="Enter song name"
-                    required
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="artist">Artist</Label>
-                  <Input
-                    id="artist"
-                    value={newRequest.artist}
-                    onChange={(e) => setNewRequest({...newRequest, artist: e.target.value})}
-                    placeholder="Enter artist name"
-                    required
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="specialRequest">Special Request (Optional)</Label>
-                  <Textarea
-                    id="specialRequest"
-                    value={newRequest.specialRequest}
-                    onChange={(e) => setNewRequest({...newRequest, specialRequest: e.target.value})}
-                    placeholder="Any special requests or dedications?"
-                    className="h-24"
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="tipAmount">Tip Amount (Optional)</Label>
-                  <div className="relative">
-                    <DollarSign className="absolute left-3 top-2.5 h-5 w-5 text-gray-400" />
-                    <Input
-                      id="tipAmount"
-                      type="number"
-                      min="0"
-                      step="1"
-                      value={newRequest.tipAmount}
-                      onChange={(e) => setNewRequest({...newRequest, tipAmount: e.target.value})}
-                      className="pl-10"
-                      placeholder="0"
-                    />
+              {events.length > 0 ? (
+                <form onSubmit={handleNewRequest} className="space-y-4 max-w-md mx-auto">
+                  <div>
+                    <Label htmlFor="eventSelect">Select Event</Label>
+                    <Select 
+                      value={activeEvent?.id?.toString()} 
+                      onValueChange={(value) => setActiveEvent(events.find(e => e.id.toString() === value))}
+                    >
+                      <SelectTrigger className="w-full">
+                        <SelectValue placeholder="Select an event" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {events.map(event => (
+                          <SelectItem 
+                            key={event.id} 
+                            value={event.id.toString()}
+                            disabled={new Date(event.date) < new Date()}
+                          >
+                            {event.name} - {new Date(event.date).toLocaleDateString()}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
-                </div>
-                <Button type="submit" className="w-full flex items-center justify-center gap-2">
-                  <Send className="h-4 w-4" />
-                  Submit Request
-                </Button>
-              </form>
+
+                  {activeEvent ? (
+                    <>
+                      <div>
+                        <Label htmlFor="songName">Song Name</Label>
+                        <Input
+                          id="songName"
+                          value={newRequest.songName}
+                          onChange={(e) => setNewRequest({...newRequest, songName: e.target.value})}
+                          placeholder="Enter song name"
+                          required
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="artist">Artist</Label>
+                        <Input
+                          id="artist"
+                          value={newRequest.artist}
+                          onChange={(e) => setNewRequest({...newRequest, artist: e.target.value})}
+                          placeholder="Enter artist name"
+                          required
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="specialRequest">Special Request (Optional)</Label>
+                        <Textarea
+                          id="specialRequest"
+                          value={newRequest.specialRequest}
+                          onChange={(e) => setNewRequest({...newRequest, specialRequest: e.target.value})}
+                          placeholder="Any special requests or dedications?"
+                          className="h-24"
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="tipAmount">Tip Amount (Optional)</Label>
+                        <div className="relative">
+                          <DollarSign className="absolute left-3 top-2.5 h-5 w-5 text-gray-400" />
+                          <Input
+                            id="tipAmount"
+                            type="number"
+                            min="0"
+                            step="1"
+                            value={newRequest.tipAmount}
+                            onChange={(e) => setNewRequest({...newRequest, tipAmount: e.target.value})}
+                            className="pl-10"
+                            placeholder="0"
+                          />
+                        </div>
+                      </div>
+                      <Button type="submit" className="w-full flex items-center justify-center gap-2">
+                        <Send className="h-4 w-4" />
+                        Submit Request
+                      </Button>
+                    </>
+                  ) : (
+                    <Alert>
+                      <AlertDescription>
+                        Please select an event to make a request
+                      </AlertDescription>
+                    </Alert>
+                  )}
+                </form>
+              ) : (
+                <Alert>
+                  <AlertDescription>
+                    No active events available for requests
+                  </AlertDescription>
+                </Alert>
+              )}
             </CardContent>
           </Card>
         )}
