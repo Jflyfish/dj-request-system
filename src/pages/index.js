@@ -310,13 +310,8 @@ async function handleCreateEvent(e) {
         <Input
           id="eventName"
           type="text"
-          value={newEvent.name}
-          onInput={(e) => {
-            setNewEvent({
-              ...newEvent,
-              name: e.target.value
-            });
-          }}
+          value={eventName}
+          onChange={(e) => setEventName(e.target.value)}
           placeholder="Enter event name"
           required
           className="w-full"
@@ -328,13 +323,8 @@ async function handleCreateEvent(e) {
         <Input
           id="eventDate"
           type="datetime-local"
-          value={newEvent.date}
-          onInput={(e) => {
-            setNewEvent({
-              ...newEvent,
-              date: e.target.value
-            });
-          }}
+          value={eventDate}
+          onChange={(e) => setEventDate(e.target.value)}
           required
           className="w-full"
         />
@@ -344,13 +334,8 @@ async function handleCreateEvent(e) {
         <Label htmlFor="eventDescription">Description (Optional)</Label>
         <Textarea
           id="eventDescription"
-          value={newEvent.description}
-          onInput={(e) => {
-            setNewEvent({
-              ...newEvent,
-              description: e.target.value
-            });
-          }}
+          value={eventDescription}
+          onChange={(e) => setEventDescription(e.target.value)}
           placeholder="Add event details"
           className="min-h-[100px] w-full"
         />
