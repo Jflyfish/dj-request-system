@@ -289,7 +289,7 @@ async function handleCreateEvent(e) {
   const DjDashboard = () => (
     <div className="space-y-6">
       {/* Add this Card component at the top of DjDashboard */}
- // Inside your DjDashboard component, replace or add the event creation Card
+
 <Card>
   <CardHeader>
     <CardTitle>Create New Event</CardTitle>
