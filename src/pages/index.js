@@ -289,7 +289,14 @@ async function handleCreateEvent(e) {
   const DjDashboard = () => (
     <div className="space-y-6">
       {/* Add this Card component at the top of DjDashboard */}
-
+{/* After your header section, update or add this Alert component */}
+{message && (
+  <Alert className="mb-4" variant={message.includes('Error') ? 'destructive' : 'default'}>
+    <AlertDescription>
+      {message}
+    </AlertDescription>
+  </Alert>
+)}
 <Card>
   <CardHeader>
     <CardTitle>Create New Event</CardTitle>
