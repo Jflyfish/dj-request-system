@@ -293,7 +293,9 @@ const handleRegister = async (e) => {
     totalTips: requests.reduce((sum, r) => sum + (parseFloat(r.tip_amount) || 0), 0)
   };
 
-  const DjDashboard = () => (
+//  const DjDashboard = () => (
+  function DjDashboard() {
+  return (
     <div className="space-y-6">
       {/* Add this Card component at the top of DjDashboard */}
 {/* After your header section, update or add this Alert component */}
