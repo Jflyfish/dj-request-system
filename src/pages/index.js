@@ -42,6 +42,7 @@ export default function Home() {
   password: '',
   confirmPassword: ''});
   const [isDjView, setIsDjView] = useState(false);
+  const [eventLoading, setEventLoading] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
