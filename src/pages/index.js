@@ -302,21 +302,29 @@ async function handleCreateEvent(e) {
     </AlertDescription>
   </Alert>
 )}
+//create new event Card edit
 <Card>
   <CardHeader>
     <CardTitle>Create New Event</CardTitle>
     <CardDescription>Set up a new event for song requests</CardDescription>
   </CardHeader>
   <CardContent>
-    <form onSubmit={handleCreateEvent} className="space-y-4">
+    <form 
+      onSubmit={handleCreateEvent}
+      className="space-y-4"
+    >
       <div className="space-y-2">
         <Label htmlFor="eventName">Event Name</Label>
         <Input
           id="eventName"
+          type="text"
           value={newEvent.name}
           onChange={(e) => {
-            e.preventDefault();
-            setNewEvent(prev => ({ ...prev, name: e.target.value }));
+            const value = e.target.value;
+            setNewEvent(current => ({
+              ...current,
+              name: value
+            }));
           }}
           placeholder="Enter event name"
           required
@@ -331,8 +339,11 @@ async function handleCreateEvent(e) {
           type="datetime-local"
           value={newEvent.date}
           onChange={(e) => {
-            e.preventDefault();
-            setNewEvent(prev => ({ ...prev, date: e.target.value }));
+            const value = e.target.value;
+            setNewEvent(current => ({
+              ...current,
+              date: value
+            }));
           }}
           required
           className="w-full"
@@ -343,13 +354,17 @@ async function handleCreateEvent(e) {
         <Label htmlFor="eventDescription">Description (Optional)</Label>
         <Textarea
           id="eventDescription"
-          value={newEvent.description}
+          value={newEvent.description || ''}
           onChange={(e) => {
-            e.preventDefault();
-            setNewEvent(prev => ({ ...prev, description: e.target.value }));
+            const value = e.target.value;
+            setNewEvent(current => ({
+              ...current,
+              description: value
+            }));
           }}
           placeholder="Add event details"
-          className="min-h-[100px] w-full"
+          className="min-h-[100px] w-full resize-none"
+          rows={4}
         />
       </div>
 
@@ -358,19 +373,12 @@ async function handleCreateEvent(e) {
         className="w-full"
         disabled={eventLoading}
       >
-        {eventLoading ? (
-          <span className="flex items-center gap-2">
-            Creating Event...
-          </span>
-        ) : (
-          <span className="flex items-center gap-2">
-            Create Event
-          </span>
-        )}
+        {eventLoading ? 'Creating Event...' : 'Create Event'}
       </Button>
     </form>
   </CardContent>
 </Card>
+
       {/* Event Selection and Header */}
       <div className="flex justify-between items-center">
         <Select 
