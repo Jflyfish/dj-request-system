@@ -5,6 +5,12 @@ import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/com
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { DollarSign } from 'lucide-react';
 
 // Initialize Supabase client
 const supabase = createClient(
@@ -176,80 +182,82 @@ export default function EventPage() {
         </Card>
 
         {/* Request Form Card */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Make a Song Request</CardTitle>
-            <CardDescription>
-              Submit your song request for this event
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            {requestStatus && (
-              <Alert className="mb-4">
-                <AlertDescription>{requestStatus}</AlertDescription>
-              </Alert>
-            )}
-            
-            <form onSubmit={handleSubmitRequest} className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700">
-                  Song Name
-                </label>
-                <input
-                  type="text"
-                  value={newRequest.songName}
-                  onChange={(e) => setNewRequest({...newRequest, songName: e.target.value})}
-                  required
-                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700">
-                  Artist
-                </label>
-                <input
-                  type="text"
-                  value={newRequest.artist}
-                  onChange={(e) => setNewRequest({...newRequest, artist: e.target.value})}
-                  required
-                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700">
-                  Special Request (Optional)
-                </label>
-                <textarea
-                  value={newRequest.specialRequest}
-                  onChange={(e) => setNewRequest({...newRequest, specialRequest: e.target.value})}
-                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                  rows={3}
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700">
-                  Tip Amount (Optional)
-                </label>
-                <input
-                  type="number"
-                  min="0"
-                  step="1"
-                  value={newRequest.tipAmount}
-                  onChange={(e) => setNewRequest({...newRequest, tipAmount: e.target.value})}
-                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                />
-              </div>
-
-              <Button type="submit" className="w-full">
-                Submit Request
-              </Button>
-            </form>
-          </CardContent>
-        </Card>
+      {/* Request Form Card */}
+<Card>
+  <CardHeader>
+    <CardTitle>Make a Song Request</CardTitle>
+    <CardDescription>
+      Submit your song request for this event
+    </CardDescription>
+  </CardHeader>
+  <CardContent>
+    {requestStatus && (
+      <Alert className="mb-4">
+        <AlertDescription>{requestStatus}</AlertDescription>
+      </Alert>
+    )}
+    
+    <form onSubmit={handleSubmitRequest} className="space-y-6">
+      <div className="space-y-2">
+        <Label htmlFor="songName">Song Name</Label>
+        <Input
+          id="songName"
+          placeholder="Enter the song name"
+          value={newRequest.songName}
+          onChange={(e) => setNewRequest({...newRequest, songName: e.target.value})}
+          required
+        />
       </div>
-    </div>
-  );
-}
+
+      <div className="space-y-2">
+        <Label htmlFor="artist">Artist</Label>
+        <Input
+          id="artist"
+          placeholder="Enter the artist name"
+          value={newRequest.artist}
+          onChange={(e) => setNewRequest({...newRequest, artist: e.target.value})}
+          required
+        />
+      </div>
+
+      <div className="space-y-2">
+        <Label htmlFor="specialRequest">Special Request (Optional)</Label>
+        <Textarea
+          id="specialRequest"
+          placeholder="Add any special notes or dedications..."
+          value={newRequest.specialRequest}
+          onChange={(e) => setNewRequest({...newRequest, specialRequest: e.target.value})}
+          className="min-h-[100px]"
+        />
+      </div>
+
+      <div className="space-y-2">
+        <Label htmlFor="tipAmount">Tip Amount (Optional)</Label>
+        <div className="relative">
+          <div className="absolute left-3 top-1/2 -translate-y-1/2">
+            <Badge variant="secondary" className="bg-gray-100 hover:bg-gray-100">
+              <DollarSign className="h-4 w-4 text-gray-500" />
+            </Badge>
+          </div>
+          <Input
+            id="tipAmount"
+            type="number"
+            min="0"
+            step="1"
+            placeholder="0"
+            value={newRequest.tipAmount}
+            onChange={(e) => setNewRequest({...newRequest, tipAmount: e.target.value})}
+            className="pl-12"
+          />
+        </div>
+        <p className="text-sm text-muted-foreground">
+          Add an optional tip to increase your request priority
+        </p>
+      </div>
+
+      <Button type="submit" className="w-full">
+        Submit Request
+      </Button>
+    </form>
+  </CardContent>
+</Card>
