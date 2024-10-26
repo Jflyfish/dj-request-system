@@ -1,32 +1,13 @@
-
-import React from 'react';
-  // Add this with other lucide imports
-import EventCreationForm from '@/components/EventCreationForm';
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { createClient } from '@supabase/supabase-js';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Badge } from '@/components/ui/badge';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import {
-  Music,
-  LockKeyhole,
-  Send,
-  PlayCircle,
-  CheckCircle2,
-  XCircle,
-  Clock,
-  DollarSign,
-  Calendar,
-  Users,
-  BarChart,
-  LogOut
-} from 'lucide-react';
+import { Music, LockKeyhole, LogOut } from 'lucide-react';
+import EventCreationForm from '@/components/EventCreationForm';
+import { useRouter } from 'next/router';
 
 // Initialize Supabase client
 const supabase = createClient(
@@ -34,20 +15,13 @@ const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 );
 
-
-
 export default function Home() {
+  const router = useRouter();
   const [isRegistering, setIsRegistering] = useState(false);
   const [registerData, setRegisterData] = useState({
-  email: '',
-  password: '',
-  confirmPassword: ''});
-  // Replace your newEvent state with these individual states
-  // Keep this ONE version near your other state declarations
-  const [eventForm, setEventForm] = useState({
-    name: '',
-    date: '',
-    description: ''
+    email: '',
+    password: '',
+    confirmPassword: ''
   });
   const [isDjView, setIsDjView] = useState(false);
   const [eventLoading, setEventLoading] = useState(false);
@@ -56,57 +30,14 @@ export default function Home() {
   const [loading, setLoading] = useState(true);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [activeEvent, setActiveEvent] = useState(null);
-  const [events, setEvents] = useState([]);
-  const [requests, setRequests] = useState([]);
-  const [newRequest, setNewRequest] = useState({
-    songName: '',
-    artist: '',
-    specialRequest: '',
-    tipAmount: 0
-  });
-  // Add this with your other useState declarations
   const [message, setMessage] = useState('');
+  const [events, setEvents] = useState([]);
 
   // Check for existing session on load
   useEffect(() => {
     checkUser();
     fetchEvents();
   }, []);
-
-  // Fetch requests when active event changes
-  useEffect(() => {
-    if (activeEvent) {
-      fetchRequests(activeEvent.id);
-    }
-  }, [activeEvent]);
-
-  //new user function addddddddddddddddd
-const handleRegister = async (e) => {
-  e.preventDefault();
-  
-  if (registerData.password !== registerData.confirmPassword) {
-    setMessage('Passwords do not match');
-    return;
-  }
-
-  try {
-    const { data, error } = await supabase.auth.signUp({
-      email: registerData.email,
-      password: registerData.password
-    });
-
-    if (error) throw error;
-
-    setMessage('Registration successful! Please check your email for verification.');
-    setIsRegistering(false);
-  } catch (error) {
-    setMessage(error.message);
-  }
-};
-
-  //end
-  
 
   async function checkUser() {
     try {
@@ -120,40 +51,47 @@ const handleRegister = async (e) => {
     }
   }
 
-async function fetchEvents() {
-  try {
-    const { data, error } = await supabase
-      .from('events')
-      .select('*')
-      .eq('dj_id', user.id)  // Only fetch events for the logged-in DJ
-      .order('date', { ascending: true });
-    
-    if (error) throw error;
-    setEvents(data || []);
-    if (data?.length > 0 && !activeEvent) {
-      setActiveEvent(data[0]);
-    }
-  } catch (error) {
-    console.error('Error fetching events:', error.message);
-    setMessage('Error loading events');
-  }
-}
-
-  async function fetchRequests(eventId) {
+  async function fetchEvents() {
     try {
-      const { data, error } = await supabase
-        .from('requests')
-        .select('*')
-        .eq('event_id', eventId)
-        .order('created_at', { ascending: false });
+      let query = supabase.from('events').select('*').order('date', { ascending: true });
+      
+      // If in DJ view and logged in, only fetch their events
+      if (isDjView && user) {
+        query = query.eq('dj_id', user.id);
+      }
+      
+      const { data, error } = await query;
       
       if (error) throw error;
-      setRequests(data || []);
+      setEvents(data || []);
     } catch (error) {
-      console.error('Error fetching requests:', error.message);
-      setMessage('Error loading requests');
+      console.error('Error fetching events:', error.message);
+      setMessage('Error loading events');
     }
   }
+
+  const handleRegister = async (e) => {
+    e.preventDefault();
+    
+    if (registerData.password !== registerData.confirmPassword) {
+      setMessage('Passwords do not match');
+      return;
+    }
+
+    try {
+      const { data, error } = await supabase.auth.signUp({
+        email: registerData.email,
+        password: registerData.password
+      });
+
+      if (error) throw error;
+
+      setMessage('Registration successful! Please check your email for verification.');
+      setIsRegistering(false);
+    } catch (error) {
+      setMessage(error.message);
+    }
+  };
 
   async function handleDjLogin(e) {
     e.preventDefault();
@@ -167,54 +105,13 @@ async function fetchEvents() {
       setUser(data.user);
       setIsLoggedIn(true);
       setMessage('Successfully logged in!');
+      // Fetch DJ-specific events after login
+      fetchEvents();
     } catch (error) {
       console.error('Error logging in:', error.message);
       setMessage(error.message);
     }
   }
-
-  // Replace or add this function near your other handler functions
- // Update the event creation handler
-  async function handleEventSubmit(formData) {
-  setEventLoading(true);
-  setMessage('');
-
-  if (!formData.name || !formData.date) {
-    setMessage('Event name and date are required');
-    setEventLoading(false);
-    return;
-  }
-
-  try {
-    if (!user) {
-      throw new Error('You must be logged in to create events');
-    }
-
-    const { data, error } = await supabase
-      .from('events')
-      .insert([
-        {
-          name: formData.name,
-          date: new Date(formData.date).toISOString(),
-          description: formData.description || '',
-          dj_id: user.id
-        }
-      ])
-      .select();
-
-    if (error) throw error;
-
-    if (data) {
-      setEvents(prevEvents => [...prevEvents, data[0]]);
-      setMessage('Event created successfully!');
-    }
-  } catch (error) {
-    console.error('Detailed error:', error);
-    setMessage(error.message || 'Error creating event');
-  } finally {
-    setEventLoading(false);
-  }
-}
 
   async function handleLogout() {
     try {
@@ -223,202 +120,95 @@ async function fetchEvents() {
       setUser(null);
       setIsLoggedIn(false);
       setMessage('Logged out successfully');
+      // Reset to all events view
+      fetchEvents();
     } catch (error) {
       console.error('Error logging out:', error.message);
       setMessage('Error logging out');
     }
   }
 
-  async function handleNewRequest(e) {
-    e.preventDefault();
-    if (!activeEvent) {
-      setMessage('No active event selected');
-      return;
-    }
+  // New function to handle event creation
+  async function handleEventSubmit(formData) {
+    setEventLoading(true);
+    setMessage('');
 
     try {
+      if (!user) {
+        throw new Error('You must be logged in to create events');
+      }
+
       const { data, error } = await supabase
-        .from('requests')
-        .insert([{
-          event_id: activeEvent.id,
-          song_name: newRequest.songName,
-          artist: newRequest.artist,
-          special_request: newRequest.specialRequest,
-          tip_amount: parseFloat(newRequest.tipAmount) || 0,
-          status: 'pending'
-        }])
+        .from('events')
+        .insert([
+          {
+            name: formData.name,
+            date: new Date(formData.date).toISOString(),
+            description: formData.description || '',
+            dj_id: user.id
+          }
+        ])
         .select();
 
       if (error) throw error;
-      
-      setRequests([...requests, data[0]]);
-      setNewRequest({ songName: '', artist: '', specialRequest: '', tipAmount: 0 });
-      setMessage('Request submitted successfully!');
+
+      if (data) {
+        setEvents(prevEvents => [...prevEvents, data[0]]);
+        setMessage('Event created successfully!');
+        // Navigate to the new event page
+        router.push(`/event/${data[0].id}`);
+      }
     } catch (error) {
-      console.error('Error submitting request:', error.message);
-      setMessage('Error submitting request');
+      console.error('Error:', error);
+      setMessage(error.message || 'Error creating event');
+    } finally {
+      setEventLoading(false);
     }
   }
-
-  async function updateRequestStatus(id, status) {
-    try {
-      const { data, error } = await supabase
-        .from('requests')
-        .update({ status })
-        .eq('id', id)
-        .select();
-
-      if (error) throw error;
-      setRequests(requests.map(request => 
-        request.id === id ? { ...request, status } : request
-      ));
-    } catch (error) {
-      console.error('Error updating request:', error.message);
-      setMessage('Error updating request status');
-    }
-  }
-
-  // Calculate statistics
-  const stats = {
-    totalRequests: requests.length,
-    completedRequests: requests.filter(r => r.status === 'completed').length,
-    pendingRequests: requests.filter(r => r.status === 'pending').length,
-    totalTips: requests.reduce((sum, r) => sum + (parseFloat(r.tip_amount) || 0), 0)
-  };
 
   const DjDashboard = () => (
-
     <div className="space-y-6">
-      {/* Add this Card component at the top of DjDashboard */}
-{/* After your header section, update or add this Alert component */}
-{message && (
-  <Alert className="mb-4" variant={message.includes('Error') ? 'destructive' : 'default'}>
-    <AlertDescription>
-      {message}
-    </AlertDescription>
-  </Alert>
-)}
-{/* Create New Event Card*/}
- <EventCreationForm onSubmit={handleEventSubmit} isLoading={eventLoading} />
+      {message && (
+        <Alert className="mb-4" variant={message.includes('Error') ? 'destructive' : 'default'}>
+          <AlertDescription>{message}</AlertDescription>
+        </Alert>
+      )}
+      
+      <EventCreationForm onSubmit={handleEventSubmit} isLoading={eventLoading} />
 
-      {/* Event Selection and Header */}
-      <div className="flex justify-between items-center">
-        <Select 
-          value={activeEvent?.id?.toString()} 
-          onValueChange={(value) => setActiveEvent(events.find(e => e.id.toString() === value))}
-        >
-          <SelectTrigger className="w-[280px]">
-            <SelectValue placeholder="Select Event" />
-          </SelectTrigger>
-          <SelectContent>
-            {events.map(event => (
-              <SelectItem key={event.id} value={event.id.toString()}>
-                {event.name} - {new Date(event.date).toLocaleDateString()}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-        <Button onClick={handleLogout} variant="outline" className="flex items-center gap-2">
-          <LogOut className="h-4 w-4" />
-          Logout
-        </Button>
-      </div>
-
-      {/* Statistics Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        {[
-          { label: "Total Requests", value: stats.totalRequests, icon: Users },
-          { label: "Pending", value: stats.pendingRequests, icon: Clock },
-          { label: "Completed", value: stats.completedRequests, icon: CheckCircle2 },
-          { label: "Total Tips", value: `$${stats.totalTips.toFixed(2)}`, icon: DollarSign }
-        ].map((stat, i) => (
-          <Card key={i}>
-            <CardContent className="p-4 flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-500">{stat.label}</p>
-                <p className="text-2xl font-bold">{stat.value}</p>
-              </div>
-              <stat.icon className="h-8 w-8 text-gray-400" />
-            </CardContent>
-          </Card>
-        ))}
-      </div>
-
-      {/* Request Management Tabs */}
-      <Tabs defaultValue="pending" className="w-full">
-        <TabsList>
-          <TabsTrigger value="pending">Pending</TabsTrigger>
-          <TabsTrigger value="playing">Now Playing</TabsTrigger>
-          <TabsTrigger value="completed">Completed</TabsTrigger>
-          <TabsTrigger value="rejected">Rejected</TabsTrigger>
-        </TabsList>
-
-        {['pending', 'playing', 'completed', 'rejected'].map(status => (
-          <TabsContent key={status} value={status}>
-            <div className="space-y-4">
-              {requests.filter(r => r.status === status).map((request) => (
-                <Card key={request.id}>
-                  <CardContent className="p-4">
-                    <div className="flex justify-between items-start">
-                      <div className="space-y-1">
-                        <h4 className="font-semibold">{request.song_name}</h4>
-                        <p className="text-sm text-gray-600">{request.artist}</p>
-                        {request.special_request && (
-                          <p className="text-sm text-gray-500">Note: {request.special_request}</p>
-                        )}
-                        {request.tip_amount > 0 && (
-                          <Badge variant="secondary">
-                            <DollarSign className="h-3 w-3 mr-1" />
-                            Tip: ${parseFloat(request.tip_amount).toFixed(2)}
-                          </Badge>
-                        )}
-                        <div className="text-xs text-gray-400">
-                          {new Date(request.created_at).toLocaleString()}
-                        </div>
-                      </div>
-                      <div className="flex gap-2">
-                        {status === 'pending' && (
-                          <>
-                            <Button
-                              size="sm"
-                              onClick={() => updateRequestStatus(request.id, 'playing')}
-                              className="bg-green-600 hover:bg-green-700"
-                            >
-                              <PlayCircle className="h-4 w-4 mr-1" />
-                              Play
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant="destructive"
-                              onClick={() => updateRequestStatus(request.id, 'rejected')}
-                            >
-                              <XCircle className="h-4 w-4 mr-1" />
-                              Reject
-                            </Button>
-                          </>
-                        )}
-                        {status === 'playing' && (
-                          <Button
-                            size="sm"
-                            onClick={() => updateRequestStatus(request.id, 'completed')}
-                            className="bg-blue-600 hover:bg-blue-700"
-                          >
-                            <CheckCircle2 className="h-4 w-4 mr-1" />
-                            Complete
-                          </Button>
-                        )}
-                      </div>
+      {/* Events List */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Your Events</CardTitle>
+          <CardDescription>Manage your upcoming events</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            {events.length > 0 ? (
+              events.map((event) => (
+                <Card key={event.id} className="p-4">
+                  <div className="flex justify-between items-center">
+                    <div>
+                      <h3 className="font-semibold">{event.name}</h3>
+                      <p className="text-sm text-gray-500">
+                        {new Date(event.date).toLocaleDateString()}
+                      </p>
                     </div>
-                  </CardContent>
+                    <Button 
+                      variant="outline"
+                      onClick={() => router.push(`/event/${event.id}`)}
+                    >
+                      View Event Page
+                    </Button>
+                  </div>
                 </Card>
-              ))}
-              {requests.filter(r => r.status === status).length === 0 && (
-                <p className="text-center text-gray-500 py-4">No {status} requests</p>
-              )}
-            </div>
-          </TabsContent>
-        ))}
-      </Tabs>
+              ))
+            ) : (
+              <p className="text-center text-gray-500">No events created yet</p>
+            )}
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 
@@ -427,14 +217,7 @@ async function fetchEvents() {
       <div className="max-w-6xl mx-auto">
         {/* Header */}
         <div className="flex justify-between items-center mb-6">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900">DJ Event Management System</h1>
-            {activeEvent && (
-              <p className="text-gray-600">
-                {activeEvent.name} - {new Date(activeEvent.date).toLocaleDateString()}
-              </p>
-            )}
-          </div>
+          <h1 className="text-2xl font-bold text-gray-900">DJ Event Management System</h1>
           <Button 
             onClick={() => setIsDjView(!isDjView)}
             variant="outline"
@@ -461,212 +244,144 @@ async function fetchEvents() {
             </CardHeader>
             <CardContent>
               {!isLoggedIn ? (
-  <div className="space-y-4 max-w-md mx-auto">
-    {!isRegistering ? (
-      // Login Form
-      <>
-        <form onSubmit={handleDjLogin} className="space-y-4">
-          <div>
-            <Label htmlFor="email">Email</Label>
-            <Input
-              id="email"
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="Enter your email"
-              required
-            />
-          </div>
-          <div>
-            <Label htmlFor="password">Password</Label>
-            <Input
-              id="password"
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="Enter your password"
-              required
-            />
-          </div>
-          <Button type="submit" className="w-full">Login</Button>
-        </form>
-        
-        <div className="relative my-6">
-          <div className="absolute inset-0 flex items-center">
-            <span className="w-full border-t" />
-          </div>
-          <div className="relative flex justify-center text-xs uppercase">
-            <span className="bg-background px-2 text-muted-foreground">
-              Or
-            </span>
-          </div>
-        </div>
+                <div className="space-y-4 max-w-md mx-auto">
+                  {!isRegistering ? (
+                    // Login Form
+                    <>
+                      <form onSubmit={handleDjLogin} className="space-y-4">
+                        <div>
+                          <Label htmlFor="email">Email</Label>
+                          <Input
+                            id="email"
+                            type="email"
+                            value={email}
+                            onChange={(e) => setEmail(e.target.value)}
+                            placeholder="Enter your email"
+                            required
+                          />
+                        </div>
+                        <div>
+                          <Label htmlFor="password">Password</Label>
+                          <Input
+                            id="password"
+                            type="password"
+                            value={password}
+                            onChange={(e) => setPassword(e.target.value)}
+                            placeholder="Enter your password"
+                            required
+                          />
+                        </div>
+                        <Button type="submit" className="w-full">Login</Button>
+                      </form>
+                      
+                      <div className="relative my-6">
+                        <div className="absolute inset-0 flex items-center">
+                          <span className="w-full border-t" />
+                        </div>
+                        <div className="relative flex justify-center text-xs uppercase">
+                          <span className="bg-background px-2 text-muted-foreground">
+                            Or
+                          </span>
+                        </div>
+                      </div>
 
-        <Button 
-          type="button" 
-          variant="outline" 
-          className="w-full"
-          onClick={() => setIsRegistering(true)}
-        >
-          Create New DJ Account
-        </Button>
-      </>
-    ) : (
-      // Registration Form
-      <>
-        <form onSubmit={handleRegister} className="space-y-4">
-          <div>
-            <Label htmlFor="registerEmail">Email</Label>
-            <Input
-              id="registerEmail"
-              type="email"
-              value={registerData.email}
-              onChange={(e) => setRegisterData({ ...registerData, email: e.target.value })}
-              placeholder="Enter your email"
-              required
-            />
-          </div>
-          <div>
-            <Label htmlFor="registerPassword">Password</Label>
-            <Input
-              id="registerPassword"
-              type="password"
-              value={registerData.password}
-              onChange={(e) => setRegisterData({ ...registerData, password: e.target.value })}
-              placeholder="Create a password"
-              required
-              minLength={6}
-            />
-          </div>
-          <div>
-            <Label htmlFor="confirmPassword">Confirm Password</Label>
-            <Input
-              id="confirmPassword"
-              type="password"
-              value={registerData.confirmPassword}
-              onChange={(e) => setRegisterData({ ...registerData, confirmPassword: e.target.value })}
-              placeholder="Confirm your password"
-              required
-            />
-          </div>
-          <Button type="submit" className="w-full">Register</Button>
-          <Button 
-            type="button" 
-            variant="outline" 
-            className="w-full"
-            onClick={() => setIsRegistering(false)}
-          >
-            Back to Login
-          </Button>
-        </form>
-      </>
-    )}
-  </div>
+                      <Button 
+                        type="button" 
+                        variant="outline" 
+                        className="w-full"
+                        onClick={() => setIsRegistering(true)}
+                      >
+                        Create New DJ Account
+                      </Button>
+                    </>
+                  ) : (
+                    // Registration Form
+                    <form onSubmit={handleRegister} className="space-y-4">
+                      <div>
+                        <Label htmlFor="registerEmail">Email</Label>
+                        <Input
+                          id="registerEmail"
+                          type="email"
+                          value={registerData.email}
+                          onChange={(e) => setRegisterData({ ...registerData, email: e.target.value })}
+                          placeholder="Enter your email"
+                          required
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="registerPassword">Password</Label>
+                        <Input
+                          id="registerPassword"
+                          type="password"
+                          value={registerData.password}
+                          onChange={(e) => setRegisterData({ ...registerData, password: e.target.value })}
+                          placeholder="Create a password"
+                          required
+                          minLength={6}
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="confirmPassword">Confirm Password</Label>
+                        <Input
+                          id="confirmPassword"
+                          type="password"
+                          value={registerData.confirmPassword}
+                          onChange={(e) => setRegisterData({ ...registerData, confirmPassword: e.target.value })}
+                          placeholder="Confirm your password"
+                          required
+                        />
+                      </div>
+                      <Button type="submit" className="w-full">Register</Button>
+                      <Button 
+                        type="button" 
+                        variant="outline" 
+                        className="w-full"
+                        onClick={() => setIsRegistering(false)}
+                      >
+                        Back to Login
+                      </Button>
+                    </form>
+                  )}
+                </div>
               ) : (
                 <DjDashboard />
               )}
             </CardContent>
           </Card>
         ) : (
-       <Card className="border-t-4 border-t-purple-600">
+          // Public View - List of Events
+          <Card className="border-t-4 border-t-purple-600">
             <CardHeader>
-              <CardTitle>Request a Song</CardTitle>
-              <CardDescription>Select an event and submit your request</CardDescription>
+              <CardTitle>Upcoming Events</CardTitle>
+              <CardDescription>Select an event to make a song request</CardDescription>
             </CardHeader>
             <CardContent>
-              {events.length > 0 ? (
-                <form onSubmit={handleNewRequest} className="space-y-4 max-w-md mx-auto">
-                  <div>
-                    <Label htmlFor="eventSelect">Select Event</Label>
-                    <Select 
-                      value={activeEvent?.id?.toString()} 
-                      onValueChange={(value) => setActiveEvent(events.find(e => e.id.toString() === value))}
-                    >
-                      <SelectTrigger className="w-full">
-                        <SelectValue placeholder="Select an event" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {events.map(event => (
-                          <SelectItem 
-                            key={event.id} 
-                            value={event.id.toString()}
-                            disabled={new Date(event.date) < new Date()}
-                          >
-                            {event.name} - {new Date(event.date).toLocaleDateString()}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  {activeEvent ? (
-                    <>
-                      <div>
-                        <Label htmlFor="songName">Song Name</Label>
-                        <Input
-                          id="songName"
-                          value={newRequest.songName}
-                          onChange={(e) => setNewRequest({...newRequest, songName: e.target.value})}
-                          placeholder="Enter song name"
-                          required
-                        />
-                      </div>
-                      <div>
-                        <Label htmlFor="artist">Artist</Label>
-                        <Input
-                          id="artist"
-                          value={newRequest.artist}
-                          onChange={(e) => setNewRequest({...newRequest, artist: e.target.value})}
-                          placeholder="Enter artist name"
-                          required
-                        />
-                      </div>
-                      <div>
-                        <Label htmlFor="specialRequest">Special Request (Optional)</Label>
-                        <Textarea
-                          id="specialRequest"
-                          value={newRequest.specialRequest}
-                          onChange={(e) => setNewRequest({...newRequest, specialRequest: e.target.value})}
-                          placeholder="Any special requests or dedications?"
-                          className="h-24"
-                        />
-                      </div>
-                      <div>
-                        <Label htmlFor="tipAmount">Tip Amount (Optional)</Label>
-                        <div className="relative">
-                          <DollarSign className="absolute left-3 top-2.5 h-5 w-5 text-gray-400" />
-                          <Input
-                            id="tipAmount"
-                            type="number"
-                            min="0"
-                            step="1"
-                            value={newRequest.tipAmount}
-                            onChange={(e) => setNewRequest({...newRequest, tipAmount: e.target.value})}
-                            className="pl-10"
-                            placeholder="0"
-                          />
+              <div className="space-y-4">
+                {events.length > 0 ? (
+                  events.map((event) => (
+                    <Card key={event.id} className="p-4">
+                      <div className="flex justify-between items-center">
+                        <div>
+                          <h3 className="font-semibold">{event.name}</h3>
+                          <p className="text-sm text-gray-500">
+                            {new Date(event.date).toLocaleDateString()}
+                          </p>
+                          {event.description && (
+                            <p className="text-sm text-gray-600 mt-1">{event.description}</p>
+                          )}
                         </div>
+                        <Button 
+                          onClick={() => router.push(`/event/${event.id}`)}
+                        >
+                          Make Request
+                        </Button>
                       </div>
-                      <Button type="submit" className="w-full flex items-center justify-center gap-2">
-                        <Send className="h-4 w-4" />
-                        Submit Request
-                      </Button>
-                    </>
-                  ) : (
-                    <Alert>
-                      <AlertDescription>
-                        Please select an event to make a request
-                      </AlertDescription>
-                    </Alert>
-                  )}
-                </form>
-              ) : (
-                <Alert>
-                  <AlertDescription>
-                    No active events available for requests
-                  </AlertDescription>
-                </Alert>
-              )}
+                    </Card>
+                  ))
+                ) : (
+                  <p className="text-center text-gray-500">No upcoming events</p>
+                )}
+              </div>
             </CardContent>
           </Card>
         )}
