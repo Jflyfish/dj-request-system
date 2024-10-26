@@ -298,46 +298,67 @@ async function handleCreateEvent(e) {
     </AlertDescription>
   </Alert>
 )}
+{/* Create New Event Card*/}
+
 <Card>
   <CardHeader>
     <CardTitle>Create New Event</CardTitle>
     <CardDescription>Set up a new event for song requests</CardDescription>
   </CardHeader>
   <CardContent>
-    <form onSubmit={handleCreateEvent} className="space-y-4">
+    <form 
+      onSubmit={handleCreateEvent} 
+      className="space-y-4"
+      autoComplete="off"  // Added this
+    >
       <div className="space-y-2">
         <Label htmlFor="eventName">Event Name</Label>
-        <Input
+        <input
           id="eventName"
           type="text"
-          value={eventName}
-          onChange={(e) => setEventName(e.target.value)}
+          value={newEvent.name}
+          onChange={(e) => {
+            setNewEvent(prev => ({
+              ...prev,
+              name: e.target.value
+            }));
+          }}
           placeholder="Enter event name"
           required
-          className="w-full"
+          className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
         />
       </div>
 
       <div className="space-y-2">
         <Label htmlFor="eventDate">Event Date</Label>
-        <Input
+        <input
           id="eventDate"
           type="datetime-local"
-          value={eventDate}
-          onChange={(e) => setEventDate(e.target.value)}
+          value={newEvent.date}
+          onChange={(e) => {
+            setNewEvent(prev => ({
+              ...prev,
+              date: e.target.value
+            }));
+          }}
           required
-          className="w-full"
+          className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
         />
       </div>
 
       <div className="space-y-2">
         <Label htmlFor="eventDescription">Description (Optional)</Label>
-        <Textarea
+        <textarea
           id="eventDescription"
-          value={eventDescription}
-          onChange={(e) => setEventDescription(e.target.value)}
+          value={newEvent.description}
+          onChange={(e) => {
+            setNewEvent(prev => ({
+              ...prev,
+              description: e.target.value
+            }));
+          }}
           placeholder="Add event details"
-          className="min-h-[100px] w-full"
+          className="flex min-h-[100px] w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
         />
       </div>
 
