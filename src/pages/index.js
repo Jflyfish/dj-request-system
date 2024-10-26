@@ -41,6 +41,11 @@ export default function Home() {
   email: '',
   password: '',
   confirmPassword: ''});
+  const [newEvent, setNewEvent] = useState({
+  name: '',
+  date: '',
+  description: ''
+  });
   const [isDjView, setIsDjView] = useState(false);
   const [eventLoading, setEventLoading] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
