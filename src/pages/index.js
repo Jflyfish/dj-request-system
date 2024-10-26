@@ -41,11 +41,10 @@ export default function Home() {
   email: '',
   password: '',
   confirmPassword: ''});
-  const [newEvent, setNewEvent] = useState({
-  name: '',
-  date: '',
-  description: ''
-  });
+  // Replace your newEvent state with these individual states
+  const [eventName, setEventName] = useState('');
+  const [eventDate, setEventDate] = useState('');
+  const [eventDescription, setEventDescription] = useState('');
   const [isDjView, setIsDjView] = useState(false);
   const [eventLoading, setEventLoading] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
