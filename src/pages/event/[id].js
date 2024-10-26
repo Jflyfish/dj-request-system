@@ -4,7 +4,7 @@ import { createClient } from '@supabase/supabase-js';
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, DollarSign } from 'lucide-react';
+import { ArrowLeft, DollarSign, Share2 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
@@ -22,7 +22,6 @@ const EventPage = () => {
   const [event, setEvent] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [requests, setRequests] = useState([]);
   const [newRequest, setNewRequest] = useState({
     songName: '',
     artist: '',
@@ -30,36 +29,29 @@ const EventPage = () => {
     tipAmount: 0
   });
   const [requestStatus, setRequestStatus] = useState('');
+  const [copied, setCopied] = useState(false);
 
-  // Fetch event and requests when id is available
   useEffect(() => {
     if (id) {
       fetchEventDetails();
     }
   }, [id]);
 
-  // Function to fetch event details
   const fetchEventDetails = async () => {
     try {
       const { data: eventData, error: eventError } = await supabase
         .from('events')
-        .select('*')
+        .select(`
+          *,
+          profiles:dj_id (
+            email
+          )
+        `)
         .eq('id', id)
         .single();
 
       if (eventError) throw eventError;
-
       setEvent(eventData);
-
-      const { data: requestsData, error: requestsError } = await supabase
-        .from('requests')
-        .select('*')
-        .eq('event_id', id)
-        .order('created_at', { ascending: false });
-
-      if (requestsError) throw requestsError;
-
-      setRequests(requestsData || []);
     } catch (err) {
       console.error('Error:', err);
       setError(err.message);
@@ -89,20 +81,24 @@ const EventPage = () => {
 
       if (error) throw error;
 
-      setRequests([data[0], ...requests]);
       setNewRequest({
         songName: '',
         artist: '',
         specialRequest: '',
         tipAmount: 0
       });
-      setRequestStatus('Request submitted successfully!');
-      
-      await fetchEventDetails();
+      setRequestStatus('Request submitted successfully! The DJ will review your request.');
     } catch (error) {
       console.error('Error submitting request:', error);
       setRequestStatus(`Error submitting request: ${error.message}`);
     }
+  };
+
+  const copyEventLink = () => {
+    const eventUrl = window.location.href;
+    navigator.clipboard.writeText(eventUrl);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
   };
 
   if (loading) {
@@ -140,22 +136,25 @@ const EventPage = () => {
   return (
     <div className="min-h-screen bg-gray-50 p-4">
       <div className="max-w-4xl mx-auto">
-        <div className="mb-6 flex items-center justify-between">
-          <Button
-            variant="outline"
-            onClick={() => router.push('/')}
-          >
-            <ArrowLeft className="mr-2 h-4 w-4" />
-            Back to Events
-          </Button>
-        </div>
-
         <Card className="mb-6">
           <CardHeader>
-            <CardTitle>{event.name}</CardTitle>
-            <CardDescription>
-              Event Date: {new Date(event.date).toLocaleDateString()} {new Date(event.date).toLocaleTimeString()}
-            </CardDescription>
+            <div className="flex justify-between items-start">
+              <div>
+                <CardTitle>{event.name}</CardTitle>
+                <CardDescription>
+                  Event Date: {new Date(event.date).toLocaleDateString()} {new Date(event.date).toLocaleTimeString()}
+                </CardDescription>
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={copyEventLink}
+                className="flex items-center gap-2"
+              >
+                <Share2 className="h-4 w-4" />
+                {copied ? 'Copied!' : 'Share'}
+              </Button>
+            </div>
           </CardHeader>
           <CardContent>
             {event.description && (
@@ -164,13 +163,6 @@ const EventPage = () => {
                 <p className="text-gray-600">{event.description}</p>
               </div>
             )}
-            
-            <div>
-              <h3 className="font-semibold">Event Details</h3>
-              <p className="text-gray-600">
-                Total Requests: {requests.length}
-              </p>
-            </div>
           </CardContent>
         </Card>
 
@@ -183,7 +175,7 @@ const EventPage = () => {
           </CardHeader>
           <CardContent>
             {requestStatus && (
-              <Alert className="mb-4">
+              <Alert className={`mb-4 ${requestStatus.includes('Error') ? 'destructive' : ''}`}>
                 <AlertDescription>{requestStatus}</AlertDescription>
               </Alert>
             )}
