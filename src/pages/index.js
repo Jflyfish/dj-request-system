@@ -1,6 +1,7 @@
 
 import React from 'react';
   // Add this with other lucide imports
+
 import { useState, useEffect } from 'react';
 import { createClient } from '@supabase/supabase-js';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -43,10 +44,10 @@ export default function Home() {
   confirmPassword: ''});
   // Replace your newEvent state with these individual states
   // Keep this ONE version near your other state declarations
-  const [newEvent, setNewEvent] = useState({
-  name: '',
-  date: '',
-  description: ''
+  const [eventForm, setEventForm] = useState({
+    name: '',
+    date: '',
+    description: ''
   });
   const [isDjView, setIsDjView] = useState(false);
   const [eventLoading, setEventLoading] = useState(false);
@@ -172,53 +173,55 @@ const handleRegister = async (e) => {
   }
 
   // Replace or add this function near your other handler functions
-async function handleCreateEvent(e) {
-  e.preventDefault();
-  setEventLoading(true);
-  setMessage('');
+ // Update the event creation handler
+  async function handleCreateEvent(e) {
+    e.preventDefault();
+    setEventLoading(true);
+    setMessage('');
 
-  // Validation
-  if (!eventName || !eventDate) {
-    setMessage('Event name and date are required');
-    setEventLoading(false);
-    return;
-  }
-
-  try {
-    if (!user) {
-      throw new Error('You must be logged in to create events');
+    // Validation
+    if (!eventForm.name || !eventForm.date) {
+      setMessage('Event name and date are required');
+      setEventLoading(false);
+      return;
     }
 
-    const { data, error } = await supabase
-      .from('events')
-      .insert([
-        {
-          name: eventName,
-          date: new Date(eventDate).toISOString(),
-          description: eventDescription || '',
-          dj_id: user.id
-        }
-      ])
-      .select();
+    try {
+      if (!user) {
+        throw new Error('You must be logged in to create events');
+      }
 
-    if (error) throw error;
+      const { data, error } = await supabase
+        .from('events')
+        .insert([
+          {
+            name: eventForm.name,
+            date: new Date(eventForm.date).toISOString(),
+            description: eventForm.description || '',
+            dj_id: user.id
+          }
+        ])
+        .select();
 
-    if (data) {
-      setEvents(prevEvents => [...prevEvents, data[0]]);
-      // Reset form
-      setEventName('');
-      setEventDate('');
-      setEventDescription('');
-      setMessage('Event created successfully!');
+      if (error) throw error;
+
+      if (data) {
+        setEvents(prevEvents => [...prevEvents, data[0]]);
+        // Reset form
+        setEventForm({
+          name: '',
+          date: '',
+          description: ''
+        });
+        setMessage('Event created successfully!');
+      }
+    } catch (error) {
+      console.error('Detailed error:', error);
+      setMessage(error.message || 'Error creating event');
+    } finally {
+      setEventLoading(false);
     }
-  } catch (error) {
-    console.error('Detailed error:', error);
-    setMessage(error.message || 'Error creating event');
-  } finally {
-    setEventLoading(false);
   }
-}
-  
 
   async function handleLogout() {
     try {
@@ -302,74 +305,65 @@ async function handleCreateEvent(e) {
   </Alert>
 )}
 {/* Create New Event Card*/}
-<Card>
-  <CardHeader>
-    <CardTitle>Create New Event</CardTitle>
-    <CardDescription>Set up a new event for song requests</CardDescription>
-  </CardHeader>
-  <CardContent>
-    <form onSubmit={handleCreateEvent} className="space-y-4">
-      <div className="space-y-2">
-        <Label htmlFor="eventName">Event Name</Label>
-        <Input
-          id="eventName"
-          value={newEvent.name}
-          onChange={(e) => {
-            e.persist();
-            setNewEvent((prev) => ({
-              ...prev,
-              name: e.target.value
-            }));
-          }}
-          placeholder="Enter event name"
-          required
-        />
-      </div>
+  <Card>
+        <CardHeader>
+          <CardTitle>Create New Event</CardTitle>
+          <CardDescription>Set up a new event for song requests</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={handleCreateEvent} className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="eventName">Event Name</Label>
+              <Input
+                id="eventName"
+                value={eventForm.name}
+                onChange={(e) => setEventForm(prev => ({
+                  ...prev,
+                  name: e.target.value
+                }))}
+                placeholder="Enter event name"
+                required
+              />
+            </div>
 
-      <div className="space-y-2">
-        <Label htmlFor="eventDate">Event Date</Label>
-        <Input
-          id="eventDate"
-          type="datetime-local"
-          value={newEvent.date}
-          onChange={(e) => {
-            e.persist();
-            setNewEvent((prev) => ({
-              ...prev,
-              date: e.target.value
-            }));
-          }}
-          required
-        />
-      </div>
+            <div className="space-y-2">
+              <Label htmlFor="eventDate">Event Date</Label>
+              <Input
+                id="eventDate"
+                type="datetime-local"
+                value={eventForm.date}
+                onChange={(e) => setEventForm(prev => ({
+                  ...prev,
+                  date: e.target.value
+                }))}
+                required
+              />
+            </div>
 
-      <div className="space-y-2">
-        <Label htmlFor="eventDescription">Description (Optional)</Label>
-        <Textarea
-          id="eventDescription"
-          value={newEvent.description || ''}
-          onChange={(e) => {
-            e.persist();
-            setNewEvent((prev) => ({
-              ...prev,
-              description: e.target.value
-            }));
-          }}
-          placeholder="Add event details"
-          className="min-h-[100px]"
-        />
-      </div>
+            <div className="space-y-2">
+              <Label htmlFor="eventDescription">Description (Optional)</Label>
+              <Textarea
+                id="eventDescription"
+                value={eventForm.description}
+                onChange={(e) => setEventForm(prev => ({
+                  ...prev,
+                  description: e.target.value
+                }))}
+                placeholder="Add event details"
+                className="min-h-[100px]"
+              />
+            </div>
 
-      <Button 
-        type="submit" 
-        className="w-full"
-        disabled={eventLoading}
-      >
-        {eventLoading ? 'Creating Event...' : 'Create Event'}
-      </Button>
-    </form>
-  </CardContent>
-</Card>
+            <Button 
+              type="submit" 
+              className="w-full"
+              disabled={eventLoading}
+            >
+              {eventLoading ? 'Creating Event...' : 'Create Event'}
+            </Button>
+          </form>
+        </CardContent>
+      </Card>
 
       {/* Event Selection and Header */}
       <div className="flex justify-between items-center">
