@@ -257,47 +257,59 @@ export default function Home() {
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
-            {events.length > 0 ? (
-              events.map((event) => (
-                <Card key={event.id} className="p-4">
-                  <div className="flex justify-between items-center">
-                    <div>
-                      <h3 className="font-semibold">{event.name}</h3>
-                      <p className="text-sm text-gray-500">
-                        {new Date(event.date).toLocaleDateString()}
-                      </p>
-                    </div>
-                    <div className="flex gap-2">
-                      <Button 
-                        variant="outline"
-                        onClick={() => router.push(`/event/${event.id}`)}
-                      >
-                        View Event Page
-                      </Button>
-                      <Button 
-                        variant="default"
-                        onClick={() => setActiveEvent(event)}
-                      >
-                        Manage Requests
-                      </Button>
-                    </div>
-                  </div>
-                </Card>
-              ))
-            ) : (
-              <p className="text-center text-gray-500">No events created yet</p>
-            )}
+          {events.length > 0 ? (
+  events.map((event) => (
+    <Card key={event.id} className="p-4">
+      <div className="flex justify-between items-center">
+        <div>
+          <h3 className="font-semibold">{event.name}</h3>
+          <p className="text-sm text-gray-500">
+            {new Date(event.date).toLocaleDateString()}
+          </p>
+        </div>
+        <div className="flex gap-2">
+          <Button 
+            variant="outline"
+            onClick={() => router.push(`/event/${event.id}`)}
+          >
+            View Event Page
+          </Button>
+          <select
+            className="px-4 py-2 bg-blue-600 text-white rounded-md cursor-pointer hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+            onChange={(e) => {
+              setActiveEvent(event);
+              const value = e.target.value;
+              setTimeout(() => {
+                document.querySelector(`[data-value="${value}"]`)?.click();
+                document.getElementById('requestManagement')?.scrollIntoView({ behavior: 'smooth' });
+              }, 100);
+            }}
+            defaultValue=""
+          >
+            <option value="" disabled>Manage Requests</option>
+            <option value="pending">Pending Requests</option>
+            <option value="playing">Now Playing</option>
+            <option value="completed">Completed Requests</option>
+            <option value="rejected">Rejected Requests</option>
+          </select>
+        </div>
+      </div>
+    </Card>
+  ))
+) : (
+  <p className="text-center text-gray-500">No events created yet</p>
+)}
           </div>
         </CardContent>
       </Card>
 
       {/* Request Management */}
       {activeEvent && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Request Management - {activeEvent.name}</CardTitle>
-            <CardDescription>Manage song requests for this event</CardDescription>
-          </CardHeader>
+      <Card id="requestManagement">
+    <CardHeader>
+      <CardTitle>Request Management - {activeEvent.name}</CardTitle>
+      <CardDescription>Manage song requests for this event</CardDescription>
+    </CardHeader>
           <CardContent>
             <Tabs defaultValue="pending" className="w-full">
               <TabsList>
