@@ -297,7 +297,6 @@ async function handleCreateEvent(e) {
     </AlertDescription>
   </Alert>
 )}
-//create new event Card edit
 <Card>
   <CardHeader>
     <CardTitle>Create New Event</CardTitle>
