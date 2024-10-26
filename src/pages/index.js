@@ -251,6 +251,7 @@ export default function Home() {
 
       {/* Events List */}
 {/* Events List */}
+{/* Events List */}
 <Card>
   <CardHeader>
     <CardTitle>Your Events</CardTitle>
@@ -261,13 +262,17 @@ export default function Home() {
       <select
         className="w-full px-4 py-2 bg-white border border-gray-300 rounded-md cursor-pointer hover:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
         onChange={(e) => {
-          const selectedEvent = events.find(event => event.id === e.target.value);
-          setActiveEvent(selectedEvent);
-          document.getElementById('requestManagement')?.scrollIntoView({ behavior: 'smooth' });
+          if (e.target.value) {
+            const selectedEvent = events.find(event => event.id.toString() === e.target.value);
+            setActiveEvent(selectedEvent);
+            setTimeout(() => {
+              document.getElementById('requestManagement')?.scrollIntoView({ behavior: 'smooth' });
+            }, 100);
+          }
         }}
-        value={activeEvent?.id || ""}
+        value={activeEvent?.id || "default"}
       >
-        <option value="" disabled>Select an Event</option>
+        <option value="default" disabled>Select an Event</option>
         {events.map((event) => (
           <option key={event.id} value={event.id}>
             {event.name} - {new Date(event.date).toLocaleDateString()}
@@ -302,7 +307,6 @@ export default function Home() {
     </div>
   </CardContent>
 </Card>
-
       {/* Request Management */}
       {activeEvent && (
       <Card id="requestManagement">
