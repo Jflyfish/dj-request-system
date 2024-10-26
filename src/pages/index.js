@@ -120,23 +120,24 @@ const handleRegister = async (e) => {
     }
   }
 
-  async function fetchEvents() {
-    try {
-      const { data, error } = await supabase
-        .from('events')
-        .select('*')
-        .order('date', { ascending: true });
-      
-      if (error) throw error;
-      setEvents(data || []);
-      if (data?.length > 0 && !activeEvent) {
-        setActiveEvent(data[0]);
-      }
-    } catch (error) {
-      console.error('Error fetching events:', error.message);
-      setMessage('Error loading events');
+async function fetchEvents() {
+  try {
+    const { data, error } = await supabase
+      .from('events')
+      .select('*')
+      .eq('dj_id', user.id)  // Only fetch events for the logged-in DJ
+      .order('date', { ascending: true });
+    
+    if (error) throw error;
+    setEvents(data || []);
+    if (data?.length > 0 && !activeEvent) {
+      setActiveEvent(data[0]);
     }
+  } catch (error) {
+    console.error('Error fetching events:', error.message);
+    setMessage('Error loading events');
   }
+}
 
   async function fetchRequests(eventId) {
     try {
