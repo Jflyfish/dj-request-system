@@ -5,17 +5,27 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 
-const EventCreationForm = ({ onSubmit, isLoading }) => {
-  const [formData, setFormData] = useState({
+interface EventFormData {
+  name: string;
+  date: string;
+  description: string;
+}
+
+interface EventCreationFormProps {
+  onSubmit: (data: EventFormData) => Promise<void>;
+  isLoading: boolean;
+}
+
+const EventCreationForm: React.FC<EventCreationFormProps> = ({ onSubmit, isLoading }) => {
+  const [formData, setFormData] = useState<EventFormData>({
     name: '',
     date: '',
     description: ''
   });
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    onSubmit(formData);
-    // Only reset the form if submission was successful
+    await onSubmit(formData);
     if (!isLoading) {
       setFormData({
         name: '',
@@ -25,7 +35,7 @@ const EventCreationForm = ({ onSubmit, isLoading }) => {
     }
   };
 
-  const handleChange = (e) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { id, value } = e.target;
     setFormData(prev => ({
       ...prev,
