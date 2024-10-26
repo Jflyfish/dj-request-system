@@ -2,7 +2,7 @@
 import React from 'react';
   // Add this with other lucide imports
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, memo } from 'react';
 import { createClient } from '@supabase/supabase-js';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -293,78 +293,168 @@ const handleRegister = async (e) => {
     totalTips: requests.reduce((sum, r) => sum + (parseFloat(r.tip_amount) || 0), 0)
   };
 
-  const DjDashboard = () => (
+// Create a memoized EventCreationForm component
+const EventCreationForm = memo(({ user, onEventCreated }) => {
+  const [eventForm, setEventForm] = useState({
+    name: '',
+    date: '',
+    description: ''
+  });
+  const [eventLoading, setEventLoading] = useState(false);
+  const [message, setMessage] = useState('');
 
+  async function handleCreateEvent(e) {
+    e.preventDefault();
+    setEventLoading(true);
+    setMessage('');
+
+    if (!eventForm.name || !eventForm.date) {
+      setMessage('Event name and date are required');
+      setEventLoading(false);
+      return;
+    }
+
+    try {
+      if (!user) {
+        throw new Error('You must be logged in to create events');
+      }
+
+      const { data, error } = await supabase
+        .from('events')
+        .insert([
+          {
+            name: eventForm.name,
+            date: new Date(eventForm.date).toISOString(),
+            description: eventForm.description || '',
+            dj_id: user.id
+          }
+        ])
+        .select();
+
+      if (error) throw error;
+
+      if (data) {
+        onEventCreated(data[0]);
+        setEventForm({
+          name: '',
+          date: '',
+          description: ''
+        });
+        setMessage('Event created successfully!');
+      }
+    } catch (error) {
+      console.error('Detailed error:', error);
+      setMessage(error.message || 'Error creating event');
+    } finally {
+      setEventLoading(false);
+    }
+  }
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Create New Event</CardTitle>
+        <CardDescription>Set up a new event for song requests</CardDescription>
+      </CardHeader>
+      <CardContent>
+        {message && (
+          <Alert className="mb-4" variant={message.includes('Error') ? 'destructive' : 'default'}>
+            <AlertDescription>{message}</AlertDescription>
+          </Alert>
+        )}
+        <form onSubmit={handleCreateEvent} className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="eventName">Event Name</Label>
+            <Input
+              id="eventName"
+              value={eventForm.name}
+              onChange={(e) => setEventForm(prev => ({
+                ...prev,
+                name: e.target.value
+              }))}
+              placeholder="Enter event name"
+              required
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="eventDate">Event Date</Label>
+            <Input
+              id="eventDate"
+              type="datetime-local"
+              value={eventForm.date}
+              onChange={(e) => setEventForm(prev => ({
+                ...prev,
+                date: e.target.value
+              }))}
+              required
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="eventDescription">Description (Optional)</Label>
+            <Textarea
+              id="eventDescription"
+              value={eventForm.description}
+              onChange={(e) => setEventForm(prev => ({
+                ...prev,
+                description: e.target.value
+              }))}
+              placeholder="Add event details"
+              className="min-h-[100px]"
+            />
+          </div>
+
+          <Button 
+            type="submit" 
+            className="w-full"
+            disabled={eventLoading}
+          >
+            {eventLoading ? 'Creating Event...' : 'Create Event'}
+          </Button>
+        </form>
+      </CardContent>
+    </Card>
+  );
+});
+
+
+
+  
+const DjDashboard = memo(({ user, events, setEvents, activeEvent, setActiveEvent, requests, setRequests, handleLogout }) => {
+  // Calculate statistics
+  const stats = {
+    totalRequests: requests.length,
+    completedRequests: requests.filter(r => r.status === 'completed').length,
+    pendingRequests: requests.filter(r => r.status === 'pending').length,
+    totalTips: requests.reduce((sum, r) => sum + (parseFloat(r.tip_amount) || 0), 0)
+  };
+
+  const handleEventCreated = (newEvent) => {
+    setEvents(prevEvents => [...prevEvents, newEvent]);
+  };
+
+  async function updateRequestStatus(id, status) {
+    try {
+      const { data, error } = await supabase
+        .from('requests')
+        .update({ status })
+        .eq('id', id)
+        .select();
+
+      if (error) throw error;
+      setRequests(requests.map(request => 
+        request.id === id ? { ...request, status } : request
+      ));
+    } catch (error) {
+      console.error('Error updating request:', error.message);
+      setMessage('Error updating request status');
+    }
+  }
+
+  return (
     <div className="space-y-6">
-      {/* Add this Card component at the top of DjDashboard */}
-{/* After your header section, update or add this Alert component */}
-{message && (
-  <Alert className="mb-4" variant={message.includes('Error') ? 'destructive' : 'default'}>
-    <AlertDescription>
-      {message}
-    </AlertDescription>
-  </Alert>
-)}
-{/* Create New Event Card*/}
-  <Card>
-        <CardHeader>
-          <CardTitle>Create New Event</CardTitle>
-          <CardDescription>Set up a new event for song requests</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleCreateEvent} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="eventName">Event Name</Label>
-              <Input
-                id="eventName"
-                value={eventForm.name}
-                onChange={(e) => setEventForm(prev => ({
-                  ...prev,
-                  name: e.target.value
-                }))}
-                placeholder="Enter event name"
-                required
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="eventDate">Event Date</Label>
-              <Input
-                id="eventDate"
-                type="datetime-local"
-                value={eventForm.date}
-                onChange={(e) => setEventForm(prev => ({
-                  ...prev,
-                  date: e.target.value
-                }))}
-                required
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="eventDescription">Description (Optional)</Label>
-              <Textarea
-                id="eventDescription"
-                value={eventForm.description}
-                onChange={(e) => setEventForm(prev => ({
-                  ...prev,
-                  description: e.target.value
-                }))}
-                placeholder="Add event details"
-                className="min-h-[100px]"
-              />
-            </div>
-
-            <Button 
-              type="submit" 
-              className="w-full"
-              disabled={eventLoading}
-            >
-              {eventLoading ? 'Creating Event...' : 'Create Event'}
-            </Button>
-          </form>
-        </CardContent>
-      </Card>
+      <EventCreationForm user={user} onEventCreated={handleEventCreated} />
 
       {/* Event Selection and Header */}
       <div className="flex justify-between items-center">
@@ -486,256 +576,265 @@ const handleRegister = async (e) => {
       </Tabs>
     </div>
   );
+});
 
-  return (
-    <div className="min-h-screen bg-gray-50 p-4">
-      <div className="max-w-6xl mx-auto">
-        {/* Header */}
-        <div className="flex justify-between items-center mb-6">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900">DJ Event Management System</h1>
-            {activeEvent && (
-              <p className="text-gray-600">
-                {activeEvent.name} - {new Date(activeEvent.date).toLocaleDateString()}
-              </p>
-            )}
-          </div>
-          <Button 
-            onClick={() => setIsDjView(!isDjView)}
-            variant="outline"
-            className="flex items-center gap-2"
-          >
-            {isDjView ? <Music className="h-4 w-4" /> : <LockKeyhole className="h-4 w-4" />}
-            Switch to {isDjView ? 'Request' : 'DJ'} View
-          </Button>
+return (
+  <div className="min-h-screen bg-gray-50 p-4">
+    <div className="max-w-6xl mx-auto">
+      {/* Header */}
+      <div className="flex justify-between items-center mb-6">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">DJ Event Management System</h1>
+          {activeEvent && (
+            <p className="text-gray-600">
+              {activeEvent.name} - {new Date(activeEvent.date).toLocaleDateString()}
+            </p>
+          )}
         </div>
-
-        {/* Messages */}
-        {message && (
-          <Alert className="mb-4">
-            <AlertDescription>{message}</AlertDescription>
-          </Alert>
-        )}
-
-        {/* Main Content */}
-        {isDjView ? (
-          <Card className="border-t-4 border-t-blue-600">
-            <CardHeader>
-              <CardTitle>DJ Dashboard</CardTitle>
-              <CardDescription>Manage song requests and event details</CardDescription>
-            </CardHeader>
-            <CardContent>
-              {!isLoggedIn ? (
-  <div className="space-y-4 max-w-md mx-auto">
-    {!isRegistering ? (
-      // Login Form
-      <>
-        <form onSubmit={handleDjLogin} className="space-y-4">
-          <div>
-            <Label htmlFor="email">Email</Label>
-            <Input
-              id="email"
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="Enter your email"
-              required
-            />
-          </div>
-          <div>
-            <Label htmlFor="password">Password</Label>
-            <Input
-              id="password"
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="Enter your password"
-              required
-            />
-          </div>
-          <Button type="submit" className="w-full">Login</Button>
-        </form>
-        
-        <div className="relative my-6">
-          <div className="absolute inset-0 flex items-center">
-            <span className="w-full border-t" />
-          </div>
-          <div className="relative flex justify-center text-xs uppercase">
-            <span className="bg-background px-2 text-muted-foreground">
-              Or
-            </span>
-          </div>
-        </div>
-
         <Button 
-          type="button" 
-          variant="outline" 
-          className="w-full"
-          onClick={() => setIsRegistering(true)}
+          onClick={() => setIsDjView(!isDjView)}
+          variant="outline"
+          className="flex items-center gap-2"
         >
-          Create New DJ Account
+          {isDjView ? <Music className="h-4 w-4" /> : <LockKeyhole className="h-4 w-4" />}
+          Switch to {isDjView ? 'Request' : 'DJ'} View
         </Button>
-      </>
-    ) : (
-      // Registration Form
-      <>
-        <form onSubmit={handleRegister} className="space-y-4">
-          <div>
-            <Label htmlFor="registerEmail">Email</Label>
-            <Input
-              id="registerEmail"
-              type="email"
-              value={registerData.email}
-              onChange={(e) => setRegisterData({ ...registerData, email: e.target.value })}
-              placeholder="Enter your email"
-              required
-            />
-          </div>
-          <div>
-            <Label htmlFor="registerPassword">Password</Label>
-            <Input
-              id="registerPassword"
-              type="password"
-              value={registerData.password}
-              onChange={(e) => setRegisterData({ ...registerData, password: e.target.value })}
-              placeholder="Create a password"
-              required
-              minLength={6}
-            />
-          </div>
-          <div>
-            <Label htmlFor="confirmPassword">Confirm Password</Label>
-            <Input
-              id="confirmPassword"
-              type="password"
-              value={registerData.confirmPassword}
-              onChange={(e) => setRegisterData({ ...registerData, confirmPassword: e.target.value })}
-              placeholder="Confirm your password"
-              required
-            />
-          </div>
-          <Button type="submit" className="w-full">Register</Button>
-          <Button 
-            type="button" 
-            variant="outline" 
-            className="w-full"
-            onClick={() => setIsRegistering(false)}
-          >
-            Back to Login
-          </Button>
-        </form>
-      </>
-    )}
-  </div>
-              ) : (
-                <DjDashboard />
-              )}
-            </CardContent>
-          </Card>
-        ) : (
-       <Card className="border-t-4 border-t-purple-600">
-            <CardHeader>
-              <CardTitle>Request a Song</CardTitle>
-              <CardDescription>Select an event and submit your request</CardDescription>
-            </CardHeader>
-            <CardContent>
-              {events.length > 0 ? (
-                <form onSubmit={handleNewRequest} className="space-y-4 max-w-md mx-auto">
-                  <div>
-                    <Label htmlFor="eventSelect">Select Event</Label>
-                    <Select 
-                      value={activeEvent?.id?.toString()} 
-                      onValueChange={(value) => setActiveEvent(events.find(e => e.id.toString() === value))}
-                    >
-                      <SelectTrigger className="w-full">
-                        <SelectValue placeholder="Select an event" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {events.map(event => (
-                          <SelectItem 
-                            key={event.id} 
-                            value={event.id.toString()}
-                            disabled={new Date(event.date) < new Date()}
-                          >
-                            {event.name} - {new Date(event.date).toLocaleDateString()}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  {activeEvent ? (
-                    <>
-                      <div>
-                        <Label htmlFor="songName">Song Name</Label>
-                        <Input
-                          id="songName"
-                          value={newRequest.songName}
-                          onChange={(e) => setNewRequest({...newRequest, songName: e.target.value})}
-                          placeholder="Enter song name"
-                          required
-                        />
-                      </div>
-                      <div>
-                        <Label htmlFor="artist">Artist</Label>
-                        <Input
-                          id="artist"
-                          value={newRequest.artist}
-                          onChange={(e) => setNewRequest({...newRequest, artist: e.target.value})}
-                          placeholder="Enter artist name"
-                          required
-                        />
-                      </div>
-                      <div>
-                        <Label htmlFor="specialRequest">Special Request (Optional)</Label>
-                        <Textarea
-                          id="specialRequest"
-                          value={newRequest.specialRequest}
-                          onChange={(e) => setNewRequest({...newRequest, specialRequest: e.target.value})}
-                          placeholder="Any special requests or dedications?"
-                          className="h-24"
-                        />
-                      </div>
-                      <div>
-                        <Label htmlFor="tipAmount">Tip Amount (Optional)</Label>
-                        <div className="relative">
-                          <DollarSign className="absolute left-3 top-2.5 h-5 w-5 text-gray-400" />
-                          <Input
-                            id="tipAmount"
-                            type="number"
-                            min="0"
-                            step="1"
-                            value={newRequest.tipAmount}
-                            onChange={(e) => setNewRequest({...newRequest, tipAmount: e.target.value})}
-                            className="pl-10"
-                            placeholder="0"
-                          />
-                        </div>
-                      </div>
-                      <Button type="submit" className="w-full flex items-center justify-center gap-2">
-                        <Send className="h-4 w-4" />
-                        Submit Request
-                      </Button>
-                    </>
-                  ) : (
-                    <Alert>
-                      <AlertDescription>
-                        Please select an event to make a request
-                      </AlertDescription>
-                    </Alert>
-                  )}
-                </form>
-              ) : (
-                <Alert>
-                  <AlertDescription>
-                    No active events available for requests
-                  </AlertDescription>
-                </Alert>
-              )}
-            </CardContent>
-          </Card>
-        )}
       </div>
+
+      {/* Messages */}
+      {message && (
+        <Alert className="mb-4">
+          <AlertDescription>{message}</AlertDescription>
+        </Alert>
+      )}
+
+      {/* Main Content */}
+      {isDjView ? (
+        <Card className="border-t-4 border-t-blue-600">
+          <CardHeader>
+            <CardTitle>DJ Dashboard</CardTitle>
+            <CardDescription>Manage song requests and event details</CardDescription>
+          </CardHeader>
+          <CardContent>
+            {!isLoggedIn ? (
+              <div className="space-y-4 max-w-md mx-auto">
+                {!isRegistering ? (
+                  // Login Form
+                  <>
+                    <form onSubmit={handleDjLogin} className="space-y-4">
+                      <div>
+                        <Label htmlFor="email">Email</Label>
+                        <Input
+                          id="email"
+                          type="email"
+                          value={email}
+                          onChange={(e) => setEmail(e.target.value)}
+                          placeholder="Enter your email"
+                          required
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="password">Password</Label>
+                        <Input
+                          id="password"
+                          type="password"
+                          value={password}
+                          onChange={(e) => setPassword(e.target.value)}
+                          placeholder="Enter your password"
+                          required
+                        />
+                      </div>
+                      <Button type="submit" className="w-full">Login</Button>
+                    </form>
+                    
+                    <div className="relative my-6">
+                      <div className="absolute inset-0 flex items-center">
+                        <span className="w-full border-t" />
+                      </div>
+                      <div className="relative flex justify-center text-xs uppercase">
+                        <span className="bg-background px-2 text-muted-foreground">
+                          Or
+                        </span>
+                      </div>
+                    </div>
+
+                    <Button 
+                      type="button" 
+                      variant="outline" 
+                      className="w-full"
+                      onClick={() => setIsRegistering(true)}
+                    >
+                      Create New DJ Account
+                    </Button>
+                  </>
+                ) : (
+                  // Registration Form
+                  <>
+                    <form onSubmit={handleRegister} className="space-y-4">
+                      <div>
+                        <Label htmlFor="registerEmail">Email</Label>
+                        <Input
+                          id="registerEmail"
+                          type="email"
+                          value={registerData.email}
+                          onChange={(e) => setRegisterData({ ...registerData, email: e.target.value })}
+                          placeholder="Enter your email"
+                          required
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="registerPassword">Password</Label>
+                        <Input
+                          id="registerPassword"
+                          type="password"
+                          value={registerData.password}
+                          onChange={(e) => setRegisterData({ ...registerData, password: e.target.value })}
+                          placeholder="Create a password"
+                          required
+                          minLength={6}
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="confirmPassword">Confirm Password</Label>
+                        <Input
+                          id="confirmPassword"
+                          type="password"
+                          value={registerData.confirmPassword}
+                          onChange={(e) => setRegisterData({ ...registerData, confirmPassword: e.target.value })}
+                          placeholder="Confirm your password"
+                          required
+                        />
+                      </div>
+                      <Button type="submit" className="w-full">Register</Button>
+                      <Button 
+                        type="button" 
+                        variant="outline" 
+                        className="w-full"
+                        onClick={() => setIsRegistering(false)}
+                      >
+                        Back to Login
+                      </Button>
+                    </form>
+                  </>
+                )}
+              </div>
+            ) : (
+              <DjDashboard 
+                user={user}
+                events={events}
+                setEvents={setEvents}
+                activeEvent={activeEvent}
+                setActiveEvent={setActiveEvent}
+                requests={requests}
+                setRequests={setRequests}
+                handleLogout={handleLogout}
+              />
+            )}
+          </CardContent>
+        </Card>
+      ) : (
+        <Card className="border-t-4 border-t-purple-600">
+          <CardHeader>
+            <CardTitle>Request a Song</CardTitle>
+            <CardDescription>Select an event and submit your request</CardDescription>
+          </CardHeader>
+          <CardContent>
+            {events.length > 0 ? (
+              <form onSubmit={handleNewRequest} className="space-y-4 max-w-md mx-auto">
+                <div>
+                  <Label htmlFor="eventSelect">Select Event</Label>
+                  <Select 
+                    value={activeEvent?.id?.toString()} 
+                    onValueChange={(value) => setActiveEvent(events.find(e => e.id.toString() === value))}
+                  >
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="Select an event" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {events.map(event => (
+                        <SelectItem 
+                          key={event.id} 
+                          value={event.id.toString()}
+                          disabled={new Date(event.date) < new Date()}
+                        >
+                          {event.name} - {new Date(event.date).toLocaleDateString()}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {activeEvent ? (
+                  <>
+                    <div>
+                      <Label htmlFor="songName">Song Name</Label>
+                      <Input
+                        id="songName"
+                        value={newRequest.songName}
+                        onChange={(e) => setNewRequest({...newRequest, songName: e.target.value})}
+                        placeholder="Enter song name"
+                        required
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="artist">Artist</Label>
+                      <Input
+                        id="artist"
+                        value={newRequest.artist}
+                        onChange={(e) => setNewRequest({...newRequest, artist: e.target.value})}
+                        placeholder="Enter artist name"
+                        required
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="specialRequest">Special Request (Optional)</Label>
+                      <Textarea
+                        id="specialRequest"
+                        value={newRequest.specialRequest}
+                        onChange={(e) => setNewRequest({...newRequest, specialRequest: e.target.value})}
+                        placeholder="Any special requests or dedications?"
+                        className="h-24"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="tipAmount">Tip Amount (Optional)</Label>
+                      <div className="relative">
+                        <DollarSign className="absolute left-3 top-2.5 h-5 w-5 text-gray-400" />
+                        <Input
+                          id="tipAmount"
+                          type="number"
+                          min="0"
+                          step="1"
+                          value={newRequest.tipAmount}
+                          onChange={(e) => setNewRequest({...newRequest, tipAmount: e.target.value})}
+                          className="pl-10"
+                          placeholder="0"
+                        />
+                      </div>
+                    </div>
+                    <Button type="submit" className="w-full flex items-center justify-center gap-2">
+                      <Send className="h-4 w-4" />
+                      Submit Request
+                    </Button>
+                  </>
+                ) : (
+                  <Alert>
+                    <AlertDescription>
+                      Please select an event to make a request
+                    </AlertDescription>
+                  </Alert>
+                )}
+              </form>
+            ) : (
+              <Alert>
+                <AlertDescription>
+                  No active events available for requests
+                </AlertDescription>
+              </Alert>
+            )}
+          </CardContent>
+        </Card>
+      )}
     </div>
-  );
-}
+  </div>
+);
