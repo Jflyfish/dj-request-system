@@ -63,11 +63,6 @@ export default function Home() {
     tipAmount: 0
   });
   // Add this with your other useState declarations
-const [newEvent, setNewEvent] = useState({
-  name: '',
-  date: '',
-  description: ''
-  });
   const [message, setMessage] = useState('');
 
   // Check for existing session on load
