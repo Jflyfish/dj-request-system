@@ -306,55 +306,64 @@ const handleRegister = async (e) => {
 )}
 {/* Create New Event Card*/}
   <Card>
-  <CardHeader>
-    <CardTitle>Create New Event</CardTitle>
-    <CardDescription>Set up a new event for song requests</CardDescription>
-  </CardHeader>
-  <CardContent>
-    <form onSubmit={handleCreateEvent} className="space-y-4">
-      <div className="space-y-2">
-        <Label htmlFor="eventName">Event Name</Label>
-        <Input
-          id="eventName"
-          value={newEvent.name}
-          onChange={(e) => setNewEvent({ ...newEvent, name: e.target.value })}
-          placeholder="Enter event name"
-          required
-        />
-      </div>
+        <CardHeader>
+          <CardTitle>Create New Event</CardTitle>
+          <CardDescription>Set up a new event for song requests</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={handleCreateEvent} className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="eventName">Event Name</Label>
+              <Input
+                id="eventName"
+                value={eventForm.name}
+                onChange={(e) => setEventForm(prev => ({
+                  ...prev,
+                  name: e.target.value
+                }))}
+                placeholder="Enter event name"
+                required
+              />
+            </div>
 
-      <div className="space-y-2">
-        <Label htmlFor="eventDate">Event Date</Label>
-        <Input
-          id="eventDate"
-          type="datetime-local"
-          value={newEvent.date}
-          onChange={(e) => setNewEvent({ ...newEvent, date: e.target.value })}
-          required
-        />
-      </div>
+            <div className="space-y-2">
+              <Label htmlFor="eventDate">Event Date</Label>
+              <Input
+                id="eventDate"
+                type="datetime-local"
+                value={eventForm.date}
+                onChange={(e) => setEventForm(prev => ({
+                  ...prev,
+                  date: e.target.value
+                }))}
+                required
+              />
+            </div>
 
-      <div className="space-y-2">
-        <Label htmlFor="eventDescription">Description (Optional)</Label>
-        <Textarea
-          id="eventDescription"
-          value={newEvent.description}
-          onChange={(e) => setNewEvent({ ...newEvent, description: e.target.value })}
-          placeholder="Add event details"
-          className="min-h-[100px]"
-        />
-      </div>
+            <div className="space-y-2">
+              <Label htmlFor="eventDescription">Description (Optional)</Label>
+              <Textarea
+                id="eventDescription"
+                value={eventForm.description}
+                onChange={(e) => setEventForm(prev => ({
+                  ...prev,
+                  description: e.target.value
+                }))}
+                placeholder="Add event details"
+                className="min-h-[100px]"
+              />
+            </div>
 
-      <Button 
-        type="submit" 
-        className="w-full"
-        disabled={eventLoading}
-      >
-        {eventLoading ? 'Creating Event...' : 'Create Event'}
-      </Button>
-    </form>
-  </CardContent>
-</Card>
+            <Button 
+              type="submit" 
+              className="w-full"
+              disabled={eventLoading}
+            >
+              {eventLoading ? 'Creating Event...' : 'Create Event'}
+            </Button>
+          </form>
+        </CardContent>
+      </Card>
 
       {/* Event Selection and Header */}
       <div className="flex justify-between items-center">
