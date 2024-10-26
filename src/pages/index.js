@@ -299,7 +299,6 @@ async function handleCreateEvent(e) {
   </Alert>
 )}
 {/* Create New Event Card*/}
-
 <Card>
   <CardHeader>
     <CardTitle>Create New Event</CardTitle>
@@ -307,17 +306,19 @@ async function handleCreateEvent(e) {
   </CardHeader>
   <CardContent>
     <form 
-      onSubmit={handleCreateEvent} 
+      onSubmit={(e) => {
+        e.preventDefault();
+        handleCreateEvent(e);
+      }} 
       className="space-y-4"
-      autoComplete="off"  // Added this
     >
       <div className="space-y-2">
         <Label htmlFor="eventName">Event Name</Label>
-        <input
+        <Input
           id="eventName"
           type="text"
-          value={newEvent.name}
-          onChange={(e) => {
+          defaultValue={newEvent.name}
+          onBlur={(e) => {
             setNewEvent(prev => ({
               ...prev,
               name: e.target.value
@@ -325,40 +326,40 @@ async function handleCreateEvent(e) {
           }}
           placeholder="Enter event name"
           required
-          className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+          className="w-full"
         />
       </div>
 
       <div className="space-y-2">
         <Label htmlFor="eventDate">Event Date</Label>
-        <input
+        <Input
           id="eventDate"
           type="datetime-local"
-          value={newEvent.date}
-          onChange={(e) => {
+          defaultValue={newEvent.date}
+          onBlur={(e) => {
             setNewEvent(prev => ({
               ...prev,
               date: e.target.value
             }));
           }}
           required
-          className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+          className="w-full"
         />
       </div>
 
       <div className="space-y-2">
         <Label htmlFor="eventDescription">Description (Optional)</Label>
-        <textarea
+        <Textarea
           id="eventDescription"
-          value={newEvent.description}
-          onChange={(e) => {
+          defaultValue={newEvent.description}
+          onBlur={(e) => {
             setNewEvent(prev => ({
               ...prev,
               description: e.target.value
             }));
           }}
           placeholder="Add event details"
-          className="flex min-h-[100px] w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+          className="min-h-[100px] w-full"
         />
       </div>
 
