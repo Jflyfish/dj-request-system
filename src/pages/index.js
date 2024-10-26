@@ -168,27 +168,50 @@ const handleRegister = async (e) => {
       setMessage(error.message);
     }
   }
-  async function handleCreateEvent(e) {
+
+  // Replace or add this function near your other handler functions
+async function handleCreateEvent(e) {
   e.preventDefault();
+  setEventLoading(true);
+  setMessage('');
+
+  // Validation
+  if (!newEvent.name || !newEvent.date) {
+    setMessage('Event name and date are required');
+    setEventLoading(false);
+    return;
+  }
+
   try {
+    // Make sure we have a logged-in user
+    if (!user) {
+      throw new Error('You must be logged in to create events');
+    }
+
     const { data, error } = await supabase
       .from('events')
-      .insert([{
-        name: newEvent.name,
-        date: newEvent.date,
-        description: newEvent.description,
-        dj_id: user.id
-      }])
+      .insert([
+        {
+          name: newEvent.name,
+          date: new Date(newEvent.date).toISOString(),
+          description: newEvent.description || '',
+          dj_id: user.id
+        }
+      ])
       .select();
 
     if (error) throw error;
-    
-    setEvents([...events, data[0]]);
-    setNewEvent({ name: '', date: '', description: '' });
-    setMessage('Event created successfully!');
+
+    if (data) {
+      setEvents(prevEvents => [...prevEvents, data[0]]);
+      setNewEvent({ name: '', date: '', description: '' });
+      setMessage('Event created successfully!');
+    }
   } catch (error) {
-    console.error('Error creating event:', error.message);
-    setMessage('Error creating event');
+    console.error('Detailed error:', error);
+    setMessage(error.message || 'Error creating event');
+  } finally {
+    setEventLoading(false);
   }
 }
   
@@ -266,45 +289,76 @@ const handleRegister = async (e) => {
   const DjDashboard = () => (
     <div className="space-y-6">
       {/* Add this Card component at the top of DjDashboard */}
-    <Card>
-      <CardHeader>
-        <CardTitle>Create New Event</CardTitle>
-      </CardHeader>
-      <CardContent>
-        <form onSubmit={handleCreateEvent} className="space-y-4">
-          <div>
-            <Label htmlFor="eventName">Event Name</Label>
-            <Input
-              id="eventName"
-              value={newEvent.name}
-              onChange={(e) => setNewEvent({ ...newEvent, name: e.target.value })}
-              placeholder="Enter event name"
-              required
-            />
-          </div>
-          <div>
-            <Label htmlFor="eventDate">Event Date</Label>
-            <Input
-              id="eventDate"
-              type="datetime-local"
-              value={newEvent.date}
-              onChange={(e) => setNewEvent({ ...newEvent, date: e.target.value })}
-              required
-            />
-          </div>
-          <div>
-            <Label htmlFor="eventDescription">Description</Label>
-            <Textarea
-              id="eventDescription"
-              value={newEvent.description}
-              onChange={(e) => setNewEvent({ ...newEvent, description: e.target.value })}
-              placeholder="Event description"
-            />
-          </div>
-          <Button type="submit">Create Event</Button>
-        </form>
-      </CardContent>
-    </Card>
+ // Inside your DjDashboard component, replace or add the event creation Card
+<Card>
+  <CardHeader>
+    <CardTitle>Create New Event</CardTitle>
+    <CardDescription>Set up a new event for song requests</CardDescription>
+  </CardHeader>
+  <CardContent>
+    <form onSubmit={handleCreateEvent} className="space-y-4">
+      <div className="space-y-2">
+        <Label htmlFor="eventName">Event Name</Label>
+        <Input
+          id="eventName"
+          value={newEvent.name}
+          onChange={(e) => {
+            e.preventDefault();
+            setNewEvent(prev => ({ ...prev, name: e.target.value }));
+          }}
+          placeholder="Enter event name"
+          required
+          className="w-full"
+        />
+      </div>
+
+      <div className="space-y-2">
+        <Label htmlFor="eventDate">Event Date</Label>
+        <Input
+          id="eventDate"
+          type="datetime-local"
+          value={newEvent.date}
+          onChange={(e) => {
+            e.preventDefault();
+            setNewEvent(prev => ({ ...prev, date: e.target.value }));
+          }}
+          required
+          className="w-full"
+        />
+      </div>
+
+      <div className="space-y-2">
+        <Label htmlFor="eventDescription">Description (Optional)</Label>
+        <Textarea
+          id="eventDescription"
+          value={newEvent.description}
+          onChange={(e) => {
+            e.preventDefault();
+            setNewEvent(prev => ({ ...prev, description: e.target.value }));
+          }}
+          placeholder="Add event details"
+          className="min-h-[100px] w-full"
+        />
+      </div>
+
+      <Button 
+        type="submit" 
+        className="w-full"
+        disabled={eventLoading}
+      >
+        {eventLoading ? (
+          <span className="flex items-center gap-2">
+            Creating Event...
+          </span>
+        ) : (
+          <span className="flex items-center gap-2">
+            Create Event
+          </span>
+        )}
+      </Button>
+    </form>
+  </CardContent>
+</Card>
       {/* Event Selection and Header */}
       <div className="flex justify-between items-center">
         <Select 
