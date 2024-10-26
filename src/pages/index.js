@@ -1,7 +1,7 @@
 
 import React from 'react';
   // Add this with other lucide imports
-
+import EventCreationForm from '@/components/EventCreationForm';
 import { useState, useEffect } from 'react';
 import { createClient } from '@supabase/supabase-js';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
