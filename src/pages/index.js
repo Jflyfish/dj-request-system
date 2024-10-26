@@ -42,9 +42,12 @@ export default function Home() {
   password: '',
   confirmPassword: ''});
   // Replace your newEvent state with these individual states
-  const [eventName, setEventName] = useState('');
-  const [eventDate, setEventDate] = useState('');
-  const [eventDescription, setEventDescription] = useState('');
+  // Keep this ONE version near your other state declarations
+  const [newEvent, setNewEvent] = useState({
+  name: '',
+  date: '',
+  description: ''
+  });
   const [isDjView, setIsDjView] = useState(false);
   const [eventLoading, setEventLoading] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -305,28 +308,21 @@ async function handleCreateEvent(e) {
     <CardDescription>Set up a new event for song requests</CardDescription>
   </CardHeader>
   <CardContent>
-    <form 
-      onSubmit={(e) => {
-        e.preventDefault();
-        handleCreateEvent(e);
-      }} 
-      className="space-y-4"
-    >
+    <form onSubmit={handleCreateEvent} className="space-y-4">
       <div className="space-y-2">
         <Label htmlFor="eventName">Event Name</Label>
         <Input
           id="eventName"
-          type="text"
-          defaultValue={newEvent.name}
-          onBlur={(e) => {
-            setNewEvent(prev => ({
+          value={newEvent.name}
+          onChange={(e) => {
+            e.persist();
+            setNewEvent((prev) => ({
               ...prev,
               name: e.target.value
             }));
           }}
           placeholder="Enter event name"
           required
-          className="w-full"
         />
       </div>
 
@@ -335,15 +331,15 @@ async function handleCreateEvent(e) {
         <Input
           id="eventDate"
           type="datetime-local"
-          defaultValue={newEvent.date}
-          onBlur={(e) => {
-            setNewEvent(prev => ({
+          value={newEvent.date}
+          onChange={(e) => {
+            e.persist();
+            setNewEvent((prev) => ({
               ...prev,
               date: e.target.value
             }));
           }}
           required
-          className="w-full"
         />
       </div>
 
@@ -351,15 +347,16 @@ async function handleCreateEvent(e) {
         <Label htmlFor="eventDescription">Description (Optional)</Label>
         <Textarea
           id="eventDescription"
-          defaultValue={newEvent.description}
-          onBlur={(e) => {
-            setNewEvent(prev => ({
+          value={newEvent.description || ''}
+          onChange={(e) => {
+            e.persist();
+            setNewEvent((prev) => ({
               ...prev,
               description: e.target.value
             }));
           }}
           placeholder="Add event details"
-          className="min-h-[100px] w-full"
+          className="min-h-[100px]"
         />
       </div>
 
