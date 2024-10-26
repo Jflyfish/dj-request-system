@@ -303,22 +303,18 @@ async function handleCreateEvent(e) {
     <CardDescription>Set up a new event for song requests</CardDescription>
   </CardHeader>
   <CardContent>
-    <form 
-      onSubmit={handleCreateEvent}
-      className="space-y-4"
-    >
+    <form onSubmit={handleCreateEvent} className="space-y-4">
       <div className="space-y-2">
         <Label htmlFor="eventName">Event Name</Label>
         <Input
           id="eventName"
           type="text"
           value={newEvent.name}
-          onChange={(e) => {
-            const value = e.target.value;
-            setNewEvent(current => ({
-              ...current,
-              name: value
-            }));
+          onInput={(e) => {
+            setNewEvent({
+              ...newEvent,
+              name: e.target.value
+            });
           }}
           placeholder="Enter event name"
           required
@@ -332,12 +328,11 @@ async function handleCreateEvent(e) {
           id="eventDate"
           type="datetime-local"
           value={newEvent.date}
-          onChange={(e) => {
-            const value = e.target.value;
-            setNewEvent(current => ({
-              ...current,
-              date: value
-            }));
+          onInput={(e) => {
+            setNewEvent({
+              ...newEvent,
+              date: e.target.value
+            });
           }}
           required
           className="w-full"
@@ -348,17 +343,15 @@ async function handleCreateEvent(e) {
         <Label htmlFor="eventDescription">Description (Optional)</Label>
         <Textarea
           id="eventDescription"
-          value={newEvent.description || ''}
-          onChange={(e) => {
-            const value = e.target.value;
-            setNewEvent(current => ({
-              ...current,
-              description: value
-            }));
+          value={newEvent.description}
+          onInput={(e) => {
+            setNewEvent({
+              ...newEvent,
+              description: e.target.value
+            });
           }}
           placeholder="Add event details"
-          className="min-h-[100px] w-full resize-none"
-          rows={4}
+          className="min-h-[100px] w-full"
         />
       </div>
 
