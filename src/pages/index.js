@@ -175,14 +175,13 @@ async function handleCreateEvent(e) {
   setMessage('');
 
   // Validation
-  if (!newEvent.name || !newEvent.date) {
+  if (!eventName || !eventDate) {
     setMessage('Event name and date are required');
     setEventLoading(false);
     return;
   }
 
   try {
-    // Make sure we have a logged-in user
     if (!user) {
       throw new Error('You must be logged in to create events');
     }
@@ -191,9 +190,9 @@ async function handleCreateEvent(e) {
       .from('events')
       .insert([
         {
-          name: newEvent.name,
-          date: new Date(newEvent.date).toISOString(),
-          description: newEvent.description || '',
+          name: eventName,
+          date: new Date(eventDate).toISOString(),
+          description: eventDescription || '',
           dj_id: user.id
         }
       ])
@@ -203,7 +202,10 @@ async function handleCreateEvent(e) {
 
     if (data) {
       setEvents(prevEvents => [...prevEvents, data[0]]);
-      setNewEvent({ name: '', date: '', description: '' });
+      // Reset form
+      setEventName('');
+      setEventDate('');
+      setEventDescription('');
       setMessage('Event created successfully!');
     }
   } catch (error) {
