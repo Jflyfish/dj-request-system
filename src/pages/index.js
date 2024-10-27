@@ -225,162 +225,164 @@ export default function Home() {
     totalTips: requests.reduce((sum, r) => sum + (parseFloat(r.tip_amount) || 0), 0)
   };
 
-  const DjDashboard = () => (
-    <div className="space-y-6">
-      <EventCreationForm onSubmit={handleEventSubmit} isLoading={eventLoading} />
+const DjDashboard = () => (
+  <div className="space-y-6">
+    <EventCreationForm onSubmit={handleEventSubmit} isLoading={eventLoading} />
 
-      {/* Statistics Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        {[
-          { label: "Total Requests", value: stats.totalRequests, icon: Users },
-          { label: "Pending", value: stats.pendingRequests, icon: Clock },
-          { label: "Completed", value: stats.completedRequests, icon: CheckCircle2 },
-          { label: "Total Tips", value: `$${stats.totalTips.toFixed(2)}`, icon: DollarSign }
-        ].map((stat, i) => (
-          <Card key={i}>
-            <CardContent className="p-4 flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-500">{stat.label}</p>
-                <p className="text-2xl font-bold">{stat.value}</p>
-              </div>
-              <stat.icon className="h-8 w-8 text-gray-400" />
-            </CardContent>
-          </Card>
-        ))}
-      </div>
-
-{/* Request Management */}
-{activeEvent && (
-  <Card id="requestManagement">
-    <CardHeader>
-      <CardTitle>Request Management - {activeEvent.name}</CardTitle>
-      <CardDescription>Manage song requests for this event</CardDescription>
-    </CardHeader>
-    <CardContent>
-      <Tabs defaultValue="pending" className="w-full">
-        <TabsList>
-          <TabsTrigger value="pending">Pending</TabsTrigger>
-          <TabsTrigger value="playing">Now Playing</TabsTrigger>
-          <TabsTrigger value="completed">Completed</TabsTrigger>
-          <TabsTrigger value="rejected">Rejected</TabsTrigger>
-        </TabsList>
-
-        {['pending', 'playing', 'completed', 'rejected'].map(status => (
-          <TabsContent key={status} value={status}>
-            <div className="space-y-4">
-              {requests.filter(r => r.status === status).map((request) => (
-                <Card key={request.id}>
-                  <CardContent className="p-4">
-                    <div className="flex justify-between items-start">
-                      <div className="space-y-1">
-                        <h4 className="font-semibold">{request.song_name}</h4>
-                        <p className="text-sm text-gray-600">{request.artist}</p>
-                        {request.special_request && (
-                          <p className="text-sm text-gray-500">Note: {request.special_request}</p>
-                        )}
-                        {request.tip_amount > 0 && (
-                          <Badge variant="secondary">
-                            <DollarSign className="h-3 w-3 mr-1" />
-                            Tip: ${parseFloat(request.tip_amount).toFixed(2)}
-                          </Badge>
-                        )}
-                      </div>
-                      <div className="flex gap-2">
-                        {status === 'pending' && (
-                          <>
-                            <Button
-                              size="sm"
-                              onClick={() => updateRequestStatus(request.id, 'playing')}
-                              className="bg-green-600 hover:bg-green-700"
-                            >
-                              <PlayCircle className="h-4 w-4 mr-1" />
-                              Play
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant="destructive"
-                              onClick={() => updateRequestStatus(request.id, 'rejected')}
-                            >
-                              <XCircle className="h-4 w-4 mr-1" />
-                              Reject
-                            </Button>
-                          </>
-                        )}
-                        {status === 'playing' && (
-                          <Button
-                            size="sm"
-                            onClick={() => updateRequestStatus(request.id, 'completed')}
-                            className="bg-blue-600 hover:bg-blue-700"
-                          >
-                            <CheckCircle2 className="h-4 w-4 mr-1" />
-                            Complete
-                          </Button>
-                        )}
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-              {requests.filter(r => r.status === status).length === 0 && (
-                <p className="text-center text-gray-500 py-4">No {status} requests</p>
-              )}
-            </div>
-          </TabsContent>
-        ))}
-      </Tabs>
-    </CardContent>
-  </Card>
-)}
-
-{/* Events List - Now below Request Management */}
-<Card className="mt-6">
-  <CardHeader>
-    <CardTitle>Your Events</CardTitle>
-    <CardDescription>Select an event to manage requests</CardDescription>
-  </CardHeader>
-  <CardContent>
-    <div className="space-y-4">
-      <select
-        className="w-full px-4 py-2 bg-white border border-gray-300 rounded-md cursor-pointer hover:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
-        onChange={(e) => {
-          if (e.target.value) {
-            const selectedEvent = events.find(event => event.id.toString() === e.target.value);
-            setActiveEvent(selectedEvent);
-          }
-        }}
-        value={activeEvent?.id || "default"}
-      >
-        <option value="default" disabled>Select an Event</option>
-        {events.map((event) => (
-          <option key={event.id} value={event.id}>
-            {event.name} - {new Date(event.date).toLocaleDateString()}
-          </option>
-        ))}
-      </select>
-
-      {activeEvent && (
-        <Card className="p-4">
-          <div className="flex justify-between items-center">
+    {/* Statistics Cards */}
+    <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      {[
+        { label: "Total Requests", value: stats.totalRequests, icon: Users },
+        { label: "Pending", value: stats.pendingRequests, icon: Clock },
+        { label: "Completed", value: stats.completedRequests, icon: CheckCircle2 },
+        { label: "Total Tips", value: `$${stats.totalTips.toFixed(2)}`, icon: DollarSign }
+      ].map((stat, i) => (
+        <Card key={i}>
+          <CardContent className="p-4 flex items-center justify-between">
             <div>
-              <h3 className="font-semibold">{activeEvent.name}</h3>
-              <p className="text-sm text-gray-500">
-                {new Date(activeEvent.date).toLocaleDateString()}
-              </p>
+              <p className="text-sm text-gray-500">{stat.label}</p>
+              <p className="text-2xl font-bold">{stat.value}</p>
             </div>
-            <div className="flex gap-2">
-              <Button 
-                variant="outline"
-                onClick={() => router.push(`/event/${activeEvent.id}`)}
-              >
-                View Event Page
-              </Button>
-            </div>
-          </div>
+            <stat.icon className="h-8 w-8 text-gray-400" />
+          </CardContent>
         </Card>
-      )}
+      ))}
     </div>
-  </CardContent>
-</Card>
+
+    {/* Request Management */}
+    {activeEvent && (
+      <Card id="requestManagement">
+        <CardHeader>
+          <CardTitle>Request Management - {activeEvent.name}</CardTitle>
+          <CardDescription>Manage song requests for this event</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Tabs defaultValue="pending" className="w-full">
+            <TabsList>
+              <TabsTrigger value="pending">Pending</TabsTrigger>
+              <TabsTrigger value="playing">Now Playing</TabsTrigger>
+              <TabsTrigger value="completed">Completed</TabsTrigger>
+              <TabsTrigger value="rejected">Rejected</TabsTrigger>
+            </TabsList>
+
+            {['pending', 'playing', 'completed', 'rejected'].map(status => (
+              <TabsContent key={status} value={status}>
+                <div className="space-y-4">
+                  {requests.filter(r => r.status === status).map((request) => (
+                    <Card key={request.id}>
+                      <CardContent className="p-4">
+                        <div className="flex justify-between items-start">
+                          <div className="space-y-1">
+                            <h4 className="font-semibold">{request.song_name}</h4>
+                            <p className="text-sm text-gray-600">{request.artist}</p>
+                            {request.special_request && (
+                              <p className="text-sm text-gray-500">Note: {request.special_request}</p>
+                            )}
+                            {request.tip_amount > 0 && (
+                              <Badge variant="secondary">
+                                <DollarSign className="h-3 w-3 mr-1" />
+                                Tip: ${parseFloat(request.tip_amount).toFixed(2)}
+                              </Badge>
+                            )}
+                          </div>
+                          <div className="flex gap-2">
+                            {status === 'pending' && (
+                              <>
+                                <Button
+                                  size="sm"
+                                  onClick={() => updateRequestStatus(request.id, 'playing')}
+                                  className="bg-green-600 hover:bg-green-700"
+                                >
+                                  <PlayCircle className="h-4 w-4 mr-1" />
+                                  Play
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="destructive"
+                                  onClick={() => updateRequestStatus(request.id, 'rejected')}
+                                >
+                                  <XCircle className="h-4 w-4 mr-1" />
+                                  Reject
+                                </Button>
+                              </>
+                            )}
+                            {status === 'playing' && (
+                              <Button
+                                size="sm"
+                                onClick={() => updateRequestStatus(request.id, 'completed')}
+                                className="bg-blue-600 hover:bg-blue-700"
+                              >
+                                <CheckCircle2 className="h-4 w-4 mr-1" />
+                                Complete
+                              </Button>
+                            )}
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                  {requests.filter(r => r.status === status).length === 0 && (
+                    <p className="text-center text-gray-500 py-4">No {status} requests</p>
+                  )}
+                </div>
+              </TabsContent>
+            ))}
+          </Tabs>
+        </CardContent>
+      </Card>
+    )}
+
+    {/* Events List - Now below Request Management */}
+    <Card className="mt-6">
+      <CardHeader>
+        <CardTitle>Your Events</CardTitle>
+        <CardDescription>Select an event to manage requests</CardDescription>
+      </CardHeader>
+      <CardContent>
+        <div className="space-y-4">
+          <select
+            className="w-full px-4 py-2 bg-white border border-gray-300 rounded-md cursor-pointer hover:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+            onChange={(e) => {
+              if (e.target.value) {
+                const selectedEvent = events.find(event => event.id.toString() === e.target.value);
+                setActiveEvent(selectedEvent);
+              }
+            }}
+            value={activeEvent?.id || "default"}
+          >
+            <option value="default" disabled>Select an Event</option>
+            {events.map((event) => (
+              <option key={event.id} value={event.id}>
+                {event.name} - {new Date(event.date).toLocaleDateString()}
+              </option>
+            ))}
+          </select>
+
+          {activeEvent && (
+            <Card className="p-4">
+              <div className="flex justify-between items-center">
+                <div>
+                  <h3 className="font-semibold">{activeEvent.name}</h3>
+                  <p className="text-sm text-gray-500">
+                    {new Date(activeEvent.date).toLocaleDateString()}
+                  </p>
+                </div>
+                <div className="flex gap-2">
+                  <Button 
+                    variant="outline"
+                    onClick={() => router.push(`/event/${activeEvent.id}`)}
+                  >
+                    View Event Page
+                  </Button>
+                </div>
+              </div>
+            </Card>
+          )}
+        </div>
+      </CardContent>
+    </Card>
+  </div>
+);
   return (
     <div className="min-h-screen bg-gray-50 p-4">
       <div className="max-w-6xl mx-auto">
