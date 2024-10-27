@@ -249,55 +249,65 @@ export default function Home() {
         ))}
       </div>
 
-      {/* Events List */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Your Events</CardTitle>
-          <CardDescription>Manage your upcoming events</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            {events.length > 0 ? (
-              events.map((event) => (
-                <Card key={event.id} className="p-4">
-                  <div className="flex justify-between items-center">
-                    <div>
-                      <h3 className="font-semibold">{event.name}</h3>
-                      <p className="text-sm text-gray-500">
-                        {new Date(event.date).toLocaleDateString()}
-                      </p>
-                    </div>
-                    <div className="flex gap-2">
-                      <Button 
-                        variant="outline"
-                        onClick={() => router.push(`/event/${event.id}`)}
-                      >
-                        View Event Page
-                      </Button>
-                      <Button 
-                        variant="default"
-                        onClick={() => setActiveEvent(event)}
-                      >
-                        Manage Requests
-                      </Button>
-                    </div>
-                  </div>
-                </Card>
-              ))
-            ) : (
-              <p className="text-center text-gray-500">No events created yet</p>
-            )}
-          </div>
-        </CardContent>
-      </Card>
+{/* Events List */}
+<Card>
+  <CardHeader>
+    <CardTitle>Your Events</CardTitle>
+    <CardDescription>Select an event to manage requests</CardDescription>
+  </CardHeader>
+  <CardContent>
+    <div className="space-y-4">
+      <select
+        className="w-full px-4 py-2 bg-white border border-gray-300 rounded-md cursor-pointer hover:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+        onChange={(e) => {
+          if (e.target.value) {
+            const selectedEvent = events.find(event => event.id.toString() === e.target.value);
+            setActiveEvent(selectedEvent);
+            setTimeout(() => {
+              document.getElementById('requestManagement')?.scrollIntoView({ behavior: 'smooth' });
+            }, 100);
+          }
+        }}
+        value={activeEvent?.id || "default"}
+      >
+        <option value="default" disabled>Select an Event</option>
+        {events.map((event) => (
+          <option key={event.id} value={event.id}>
+            {event.name} - {new Date(event.date).toLocaleDateString()}
+          </option>
+        ))}
+      </select>
 
+      {activeEvent && (
+        <Card className="p-4">
+          <div className="flex justify-between items-center">
+            <div>
+              <h3 className="font-semibold">{activeEvent.name}</h3>
+              <p className="text-sm text-gray-500">
+                {new Date(activeEvent.date).toLocaleDateString()}
+              </p>
+            </div>
+            <div className="flex gap-2">
+              <Button 
+                variant="outline"
+                onClick={() => router.push(`/event/${activeEvent.id}`)}
+              >
+                View Event Page
+              </Button>
+            </div>
+          </div>
+        </Card>
+      )}
+    </div>
+  </CardContent>
+</Card>
       {/* Request Management */}
       {activeEvent && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Request Management - {activeEvent.name}</CardTitle>
-            <CardDescription>Manage song requests for this event</CardDescription>
-          </CardHeader>
+      <Card id="requestManagement">
+    <CardHeader>
+      <CardTitle>Request Management - {activeEvent.name}</CardTitle>
+      <CardDescription>Manage song requests for this event</CardDescription>
+    </CardHeader>
           <CardContent>
             <Tabs defaultValue="pending" className="w-full">
               <TabsList>
