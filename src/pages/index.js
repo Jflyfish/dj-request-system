@@ -227,6 +227,17 @@ export default function Home() {
 
 const DjDashboard = () => (
   <div className="space-y-6">
+  {/* Add Logout Button */}
+   <div className="flex justify-end">
+      <Button 
+        onClick={handleLogout}
+        variant="outline"
+        className="flex items-center gap-2"
+      >
+        <LogOut className="h-4 w-4" />
+        Logout
+      </Button>
+    </div>
     <EventCreationForm onSubmit={handleEventSubmit} isLoading={eventLoading} />
 
     {/* Statistics Cards */}
