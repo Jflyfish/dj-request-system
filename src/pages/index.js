@@ -249,13 +249,11 @@ export default function Home() {
         ))}
       </div>
 
-      {/* Events List */}
-{/* Events List */}
 {/* Events List */}
 <Card>
   <CardHeader>
     <CardTitle>Your Events</CardTitle>
-    <CardDescription>Manage your upcoming events</CardDescription>
+    <CardDescription>Select an event to manage requests</CardDescription>
   </CardHeader>
   <CardContent>
     <div className="space-y-4">
@@ -280,29 +278,25 @@ export default function Home() {
         ))}
       </select>
 
-      {events.length > 0 ? (
-        events.map((event) => (
-          <Card key={event.id} className="p-4">
-            <div className="flex justify-between items-center">
-              <div>
-                <h3 className="font-semibold">{event.name}</h3>
-                <p className="text-sm text-gray-500">
-                  {new Date(event.date).toLocaleDateString()}
-                </p>
-              </div>
-              <div className="flex gap-2">
-                <Button 
-                  variant="outline"
-                  onClick={() => router.push(`/event/${event.id}`)}
-                >
-                  View Event Page
-                </Button>
-              </div>
+      {activeEvent && (
+        <Card className="p-4">
+          <div className="flex justify-between items-center">
+            <div>
+              <h3 className="font-semibold">{activeEvent.name}</h3>
+              <p className="text-sm text-gray-500">
+                {new Date(activeEvent.date).toLocaleDateString()}
+              </p>
             </div>
-          </Card>
-        ))
-      ) : (
-        <p className="text-center text-gray-500">No events created yet</p>
+            <div className="flex gap-2">
+              <Button 
+                variant="outline"
+                onClick={() => router.push(`/event/${activeEvent.id}`)}
+              >
+                View Event Page
+              </Button>
+            </div>
+          </div>
+        </Card>
       )}
     </div>
   </CardContent>
