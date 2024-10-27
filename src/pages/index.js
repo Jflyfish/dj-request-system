@@ -249,8 +249,91 @@ export default function Home() {
         ))}
       </div>
 
-{/* Events List */}
-<Card>
+{/* Request Management */}
+{activeEvent && (
+  <Card id="requestManagement">
+    <CardHeader>
+      <CardTitle>Request Management - {activeEvent.name}</CardTitle>
+      <CardDescription>Manage song requests for this event</CardDescription>
+    </CardHeader>
+    <CardContent>
+      <Tabs defaultValue="pending" className="w-full">
+        <TabsList>
+          <TabsTrigger value="pending">Pending</TabsTrigger>
+          <TabsTrigger value="playing">Now Playing</TabsTrigger>
+          <TabsTrigger value="completed">Completed</TabsTrigger>
+          <TabsTrigger value="rejected">Rejected</TabsTrigger>
+        </TabsList>
+
+        {['pending', 'playing', 'completed', 'rejected'].map(status => (
+          <TabsContent key={status} value={status}>
+            <div className="space-y-4">
+              {requests.filter(r => r.status === status).map((request) => (
+                <Card key={request.id}>
+                  <CardContent className="p-4">
+                    <div className="flex justify-between items-start">
+                      <div className="space-y-1">
+                        <h4 className="font-semibold">{request.song_name}</h4>
+                        <p className="text-sm text-gray-600">{request.artist}</p>
+                        {request.special_request && (
+                          <p className="text-sm text-gray-500">Note: {request.special_request}</p>
+                        )}
+                        {request.tip_amount > 0 && (
+                          <Badge variant="secondary">
+                            <DollarSign className="h-3 w-3 mr-1" />
+                            Tip: ${parseFloat(request.tip_amount).toFixed(2)}
+                          </Badge>
+                        )}
+                      </div>
+                      <div className="flex gap-2">
+                        {status === 'pending' && (
+                          <>
+                            <Button
+                              size="sm"
+                              onClick={() => updateRequestStatus(request.id, 'playing')}
+                              className="bg-green-600 hover:bg-green-700"
+                            >
+                              <PlayCircle className="h-4 w-4 mr-1" />
+                              Play
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="destructive"
+                              onClick={() => updateRequestStatus(request.id, 'rejected')}
+                            >
+                              <XCircle className="h-4 w-4 mr-1" />
+                              Reject
+                            </Button>
+                          </>
+                        )}
+                        {status === 'playing' && (
+                          <Button
+                            size="sm"
+                            onClick={() => updateRequestStatus(request.id, 'completed')}
+                            className="bg-blue-600 hover:bg-blue-700"
+                          >
+                            <CheckCircle2 className="h-4 w-4 mr-1" />
+                            Complete
+                          </Button>
+                        )}
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+              {requests.filter(r => r.status === status).length === 0 && (
+                <p className="text-center text-gray-500 py-4">No {status} requests</p>
+              )}
+            </div>
+          </TabsContent>
+        ))}
+      </Tabs>
+    </CardContent>
+  </Card>
+)}
+
+{/* Events List - Now below Request Management */}
+<Card className="mt-6">
   <CardHeader>
     <CardTitle>Your Events</CardTitle>
     <CardDescription>Select an event to manage requests</CardDescription>
@@ -263,9 +346,6 @@ export default function Home() {
           if (e.target.value) {
             const selectedEvent = events.find(event => event.id.toString() === e.target.value);
             setActiveEvent(selectedEvent);
-            setTimeout(() => {
-              document.getElementById('requestManagement')?.scrollIntoView({ behavior: 'smooth' });
-            }, 100);
           }
         }}
         value={activeEvent?.id || "default"}
@@ -301,91 +381,6 @@ export default function Home() {
     </div>
   </CardContent>
 </Card>
-      {/* Request Management */}
-      {activeEvent && (
-      <Card id="requestManagement">
-    <CardHeader>
-      <CardTitle>Request Management - {activeEvent.name}</CardTitle>
-      <CardDescription>Manage song requests for this event</CardDescription>
-    </CardHeader>
-          <CardContent>
-            <Tabs defaultValue="pending" className="w-full">
-              <TabsList>
-                <TabsTrigger value="pending">Pending</TabsTrigger>
-                <TabsTrigger value="playing">Now Playing</TabsTrigger>
-                <TabsTrigger value="completed">Completed</TabsTrigger>
-                <TabsTrigger value="rejected">Rejected</TabsTrigger>
-              </TabsList>
-
-              {['pending', 'playing', 'completed', 'rejected'].map(status => (
-                <TabsContent key={status} value={status}>
-                  <div className="space-y-4">
-                    {requests.filter(r => r.status === status).map((request) => (
-                      <Card key={request.id}>
-                        <CardContent className="p-4">
-                          <div className="flex justify-between items-start">
-                            <div className="space-y-1">
-                              <h4 className="font-semibold">{request.song_name}</h4>
-                              <p className="text-sm text-gray-600">{request.artist}</p>
-                              {request.special_request && (
-                                <p className="text-sm text-gray-500">Note: {request.special_request}</p>
-                              )}
-                              {request.tip_amount > 0 && (
-                                <Badge variant="secondary">
-                                  <DollarSign className="h-3 w-3 mr-1" />
-                                  Tip: ${parseFloat(request.tip_amount).toFixed(2)}
-                                </Badge>
-                              )}
-                            </div>
-                            <div className="flex gap-2">
-                              {status === 'pending' && (
-                                <>
-                                  <Button
-                                    size="sm"
-                                    onClick={() => updateRequestStatus(request.id, 'playing')}
-                                    className="bg-green-600 hover:bg-green-700"
-                                  >
-                                    <PlayCircle className="h-4 w-4 mr-1" />
-                                    Play
-                                  </Button>
-                                  <Button
-                                    size="sm"
-                                    variant="destructive"
-                                    onClick={() => updateRequestStatus(request.id, 'rejected')}
-                                  >
-                                    <XCircle className="h-4 w-4 mr-1" />
-                                    Reject
-                                  </Button>
-                                </>
-                              )}
-                              {status === 'playing' && (
-                                <Button
-                                  size="sm"
-                                  onClick={() => updateRequestStatus(request.id, 'completed')}
-                                  className="bg-blue-600 hover:bg-blue-700"
-                                >
-                                  <CheckCircle2 className="h-4 w-4 mr-1" />
-                                  Complete
-                                </Button>
-                              )}
-                            </div>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    ))}
-                    {requests.filter(r => r.status === status).length === 0 && (
-                      <p className="text-center text-gray-500 py-4">No {status} requests</p>
-                    )}
-                  </div>
-                </TabsContent>
-              ))}
-            </Tabs>
-          </CardContent>
-        </Card>
-      )}
-    </div>
-  );
-
   return (
     <div className="min-h-screen bg-gray-50 p-4">
       <div className="max-w-6xl mx-auto">
