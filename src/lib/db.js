@@ -1,40 +1,8 @@
 import Database from 'better-sqlite3';
-import fs from 'fs';
-import os from 'os';
 import path from 'path';
 
-function resolveDbPath() {
-  if (process.env.DATABASE_PATH) {
-    return process.env.DATABASE_PATH;
-  }
-
-  // Serverless platforms (Vercel/Vertex-style deployments) usually only allow writes in /tmp.
-  if (process.env.VERCEL || process.env.K_SERVICE || process.env.NODE_ENV === 'production') {
-    return path.join(os.tmpdir(), 'dj-request.db');
-  }
-
-  return path.join(process.cwd(), 'dj-request.db');
-}
-
-function ensureParentDir(filePath) {
-  const parent = path.dirname(filePath);
-  fs.mkdirSync(parent, { recursive: true });
-}
-
-function openDatabase() {
-  const primaryPath = resolveDbPath();
-
-  try {
-    ensureParentDir(primaryPath);
-    return new Database(primaryPath);
-  } catch {
-    const fallbackPath = path.join(os.tmpdir(), 'dj-request.db');
-    ensureParentDir(fallbackPath);
-    return new Database(fallbackPath);
-  }
-}
-
-const db = openDatabase();
+const dbPath = path.join(process.cwd(), 'dj-request.db');
+const db = new Database(dbPath);
 
 db.pragma('journal_mode = WAL');
 

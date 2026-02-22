@@ -67,9 +67,6 @@ If Square credentials are absent, the app uses a mock payment response so local 
    ```bash
    JWT_SECRET=replace-with-a-long-random-string
 
-   # Optional: explicit SQLite path (defaults to /tmp in production/serverless)
-   DATABASE_PATH=./dj-request.db
-
    # Optional Square
    SQUARE_ENV=sandbox
    SQUARE_APP_ID=
@@ -87,7 +84,3 @@ If Square credentials are absent, the app uses a mock payment response so local 
 - Mobile-friendly guest page
 - Minimal steps for quick request submission
 - Low-latency updates via frequent polling
-
-
-## Deployment note
-On serverless hosts (like Vercel/Vertex-style runtimes), the app writes SQLite to `/tmp` by default so account creation and event/request writes work at runtime. For persistent production data, point `DATABASE_PATH` at durable storage or migrate to Postgres.
