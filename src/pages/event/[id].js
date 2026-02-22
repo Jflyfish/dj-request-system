@@ -1,252 +1,102 @@
-import { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
-import { createClient } from '@supabase/supabase-js';
-import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/components/ui/card';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Button } from '@/components/ui/button';
-import { ArrowLeft, DollarSign } from 'lucide-react';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import { Badge } from '@/components/ui/badge';
+import { useEffect, useState } from 'react';
 
-// Initialize Supabase client
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL || '',
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || ''
-);
-
-const EventPage = () => {
+export default function GuestEventPage() {
   const router = useRouter();
   const { id } = router.query;
   const [event, setEvent] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
-  const [requests, setRequests] = useState([]);
-  const [newRequest, setNewRequest] = useState({
-    songName: '',
-    artist: '',
-    specialRequest: '',
-    tipAmount: 0
-  });
-  const [requestStatus, setRequestStatus] = useState('');
+  const [form, setForm] = useState({ songName: '', artist: '', guestMessage: '', tipAmount: '' });
+  const [message, setMessage] = useState('');
 
-  // Fetch event and requests when id is available
   useEffect(() => {
-    if (id) {
-      fetchEventDetails();
-    }
+    if (!id) return;
+    fetch(`/api/events/${id}`).then(async (res) => {
+      const data = await res.json();
+      if (res.ok) setEvent(data.event);
+      else setMessage(data.error || 'Event unavailable');
+    });
   }, [id]);
 
-  // Function to fetch event details
-  const fetchEventDetails = async () => {
-    try {
-      const { data: eventData, error: eventError } = await supabase
-        .from('events')
-        .select('*')
-        .eq('id', id)
-        .single();
+  async function createTipCheckout() {
+    const res = await fetch('/api/payments/create-checkout', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ tipAmount: form.tipAmount, songName: form.songName }),
+    });
 
-      if (eventError) throw eventError;
-
-      setEvent(eventData);
-
-      const { data: requestsData, error: requestsError } = await supabase
-        .from('requests')
-        .select('*')
-        .eq('event_id', id)
-        .order('created_at', { ascending: false });
-
-      if (requestsError) throw requestsError;
-
-      setRequests(requestsData || []);
-    } catch (err) {
-      console.error('Error:', err);
-      setError(err.message);
-    } finally {
-      setLoading(false);
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Payment start failed');
+    if (data.checkoutUrl) {
+      window.open(data.checkoutUrl, '_blank', 'noopener,noreferrer');
     }
-  };
-
-  const handleSubmitRequest = async (e) => {
-    e.preventDefault();
-    setRequestStatus('');
-
-    try {
-      const { data, error } = await supabase
-        .from('requests')
-        .insert([
-          {
-            event_id: id,
-            song_name: newRequest.songName,
-            artist: newRequest.artist,
-            special_request: newRequest.specialRequest,
-            tip_amount: parseFloat(newRequest.tipAmount) || 0,
-            status: 'pending'
-          }
-        ])
-        .select();
-
-      if (error) throw error;
-
-      setRequests([data[0], ...requests]);
-      setNewRequest({
-        songName: '',
-        artist: '',
-        specialRequest: '',
-        tipAmount: 0
-      });
-      setRequestStatus('Request submitted successfully!');
-      
-      await fetchEventDetails();
-    } catch (error) {
-      console.error('Error submitting request:', error);
-      setRequestStatus(`Error submitting request: ${error.message}`);
-    }
-  };
-
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-gray-50 p-4">
-        <div className="max-w-4xl mx-auto text-center">
-          Loading event details...
-        </div>
-      </div>
-    );
+    return data.paymentStatus;
   }
 
-  if (error || !event) {
-    return (
-      <div className="min-h-screen bg-gray-50 p-4">
-        <div className="max-w-4xl mx-auto">
-          <Alert variant="destructive">
-            <AlertDescription>
-              {error || 'Event not found'}
-            </AlertDescription>
-          </Alert>
-          <Button
-            className="mt-4"
-            variant="outline"
-            onClick={() => router.push('/')}
-          >
-            <ArrowLeft className="mr-2 h-4 w-4" />
-            Back to Events
-          </Button>
-        </div>
-      </div>
-    );
+  async function submitRequest(e) {
+    e.preventDefault();
+    setMessage('');
+
+    let paymentStatus = 'none';
+    try {
+      if (Number(form.tipAmount) > 0) {
+        paymentStatus = await createTipCheckout();
+      }
+
+      const res = await fetch('/api/requests', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          eventSlug: event.slug,
+          ...form,
+          paymentStatus,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Submit failed');
+      setMessage('Request sent! The DJ sees it in real time.');
+      setForm({ songName: '', artist: '', guestMessage: '', tipAmount: '' });
+    } catch (error) {
+      setMessage(error.message);
+    }
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 p-4">
-      <div className="max-w-4xl mx-auto">
-       
+    <main className="container mobile">
+      <h1>{event?.name || 'DJ Request'}</h1>
+      <p className="subtitle">{event?.status === 'ended' ? 'This event has ended.' : 'Submit your song request below.'}</p>
 
-        <Card className="mb-6">
-          <CardHeader>
-            <CardTitle>{event.name}</CardTitle>
-            <CardDescription>
-              Event Date: {new Date(event.date).toLocaleDateString()} {new Date(event.date).toLocaleTimeString()}
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            {event.description && (
-              <div className="mb-4">
-                <h3 className="font-semibold">Description</h3>
-                <p className="text-gray-600">{event.description}</p>
-              </div>
-            )}
-            
-            <div>
-              <h3 className="font-semibold">Event Details</h3>
-              <p className="text-gray-600">
-                Total Requests: {requests.length}
-              </p>
-            </div>
-          </CardContent>
-        </Card>
+      {event?.status === 'live' && (
+        <form className="panel stack" onSubmit={submitRequest}>
+          <input
+            placeholder="Song name"
+            value={form.songName}
+            onChange={(e) => setForm({ ...form, songName: e.target.value })}
+            required
+          />
+          <input
+            placeholder="Artist"
+            value={form.artist}
+            onChange={(e) => setForm({ ...form, artist: e.target.value })}
+            required
+          />
+          <textarea
+            placeholder="Message for DJ (optional)"
+            value={form.guestMessage}
+            onChange={(e) => setForm({ ...form, guestMessage: e.target.value })}
+          />
+          <input
+            type="number"
+            min="0"
+            step="1"
+            placeholder="Tip amount in USD (optional)"
+            value={form.tipAmount}
+            onChange={(e) => setForm({ ...form, tipAmount: e.target.value })}
+          />
+          <button type="submit" className="btn-primary big">Send Request</button>
+        </form>
+      )}
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Make a Song Request</CardTitle>
-            <CardDescription>
-              Submit your song request for this event
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            {requestStatus && (
-              <Alert className="mb-4">
-                <AlertDescription>{requestStatus}</AlertDescription>
-              </Alert>
-            )}
-            
-            <form onSubmit={handleSubmitRequest} className="space-y-6">
-              <div className="space-y-2">
-                <Label htmlFor="songName">Song Name</Label>
-                <Input
-                  id="songName"
-                  placeholder="Enter the song name"
-                  value={newRequest.songName}
-                  onChange={(e) => setNewRequest({...newRequest, songName: e.target.value})}
-                  required
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="artist">Artist</Label>
-                <Input
-                  id="artist"
-                  placeholder="Enter the artist name"
-                  value={newRequest.artist}
-                  onChange={(e) => setNewRequest({...newRequest, artist: e.target.value})}
-                  required
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="specialRequest">Special Request (Optional)</Label>
-                <Textarea
-                  id="specialRequest"
-                  placeholder="Add any special notes or dedications..."
-                  value={newRequest.specialRequest}
-                  onChange={(e) => setNewRequest({...newRequest, specialRequest: e.target.value})}
-                  className="min-h-[100px]"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="tipAmount">Tip Amount (Optional)</Label>
-                <div className="relative">
-                  <div className="absolute left-3 top-1/2 -translate-y-1/2">
-                    <Badge variant="secondary" className="bg-gray-100 hover:bg-gray-100">
-                      <DollarSign className="h-4 w-4 text-gray-500" />
-                    </Badge>
-                  </div>
-                  <Input
-                    id="tipAmount"
-                    type="number"
-                    min="0"
-                    step="1"
-                    placeholder="0"
-                    value={newRequest.tipAmount}
-                    onChange={(e) => setNewRequest({...newRequest, tipAmount: e.target.value})}
-                    className="pl-12"
-                  />
-                </div>
-                <p className="text-sm text-muted-foreground">
-                  Add an optional tip to increase your request priority
-                </p>
-              </div>
-
-              <Button type="submit" className="w-full">
-                Submit Request
-              </Button>
-            </form>
-          </CardContent>
-        </Card>
-      </div>
-    </div>
+      {message && <p className="info">{message}</p>}
+    </main>
   );
-};
-
-export default EventPage;
+}
