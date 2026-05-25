@@ -1,0 +1,116 @@
+generator client {
+  provider        = "prisma-client-js"
+  output          = "../src/generated/prisma"
+  previewFeatures = ["driverAdapters"]
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+model User {
+  id               String    @id @default(cuid())
+  name             String?
+  email            String?   @unique
+  emailVerified    DateTime?
+  image            String?
+  passwordHash     String?
+  role             Role      @default(DJ)
+  accounts         Account[]
+  sessions         Session[]
+  djProfile        DJProfile?
+}
+
+model DJProfile {
+  id                    String         @id @default(cuid())
+  userId                String         @unique
+  user                  User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  displayName           String
+  slug                  String         @unique
+  bio                   String?
+  avatarUrl             String?
+  stripeAccountId       String?
+  stripeOnboarded       Boolean        @default(false)
+  tipEnabled            Boolean        @default(true)
+  requestsEnabled       Boolean        @default(true)
+  requireTip            Boolean        @default(false)
+  minTipCents           Int            @default(100)
+  platformFeePct        Int            @default(10)
+  events                Event[]
+  createdAt             DateTime       @default(now())
+}
+
+model Event {
+  id            String        @id @default(cuid())
+  djProfileId   String
+  djProfile     DJProfile     @relation(fields: [djProfileId], references: [id], onDelete: Cascade)
+  name          String
+  venue         String?
+  isActive      Boolean       @default(true)
+  requests      SongRequest[]
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+}
+
+model SongRequest {
+  id              String        @id @default(cuid())
+  eventId         String
+  event           Event         @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  songTitle       String
+  artistName      String
+  albumArt        String?
+  requesterName   String?
+  message         String?
+  tipCents        Int           @default(0)
+  status          RequestStatus @default(PENDING)
+  position        Int           @default(0)
+  stripePaymentId String?
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+}
+
+enum Role {
+  DJ
+  ADMIN
+}
+
+enum RequestStatus {
+  PENDING
+  PLAYING
+  PLAYED
+  REJECTED
+}
