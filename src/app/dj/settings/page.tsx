@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { signOut } from 'next-auth/react';
 import { toast } from 'sonner';
@@ -16,11 +16,23 @@ interface DJProfile {
   stripeAccountId: string | null;
 }
 
+function StripeReturnHandler() {
+  const searchParams = useSearchParams();
+  useEffect(() => {
+    if (searchParams.get('stripe') === 'success') {
+      toast.success('Stripe connected! You can now receive tips.');
+    }
+    if (searchParams.get('stripe') === 'refresh') {
+      toast.info('Stripe onboarding incomplete. Please try again.');
+    }
+  }, [searchParams]);
+  return null;
+}
+
 export default function SettingsPage() {
   const [profile, setProfile] = useState<DJProfile | null>(null);
   const [saving, setSaving] = useState(false);
   const [stripeLoading, setStripeLoading] = useState(false);
-  const searchParams = useSearchParams();
 
   function loadProfile() {
     return fetch('/api/dj/profile').then(r => r.json()).then(setProfile);
@@ -28,12 +40,6 @@ export default function SettingsPage() {
 
   useEffect(() => {
     loadProfile();
-    if (searchParams.get('stripe') === 'success') {
-      toast.success('Stripe connected! You can now receive tips.');
-    }
-    if (searchParams.get('stripe') === 'refresh') {
-      toast.info('Stripe onboarding incomplete. Please try again.');
-    }
   }, []);
 
   async function handleSave(e: React.FormEvent) {
@@ -81,6 +87,10 @@ export default function SettingsPage() {
 
   return (
     <div className="min-h-screen bg-zinc-950">
+      <Suspense>
+        <StripeReturnHandler />
+      </Suspense>
+
       <header className="bg-zinc-900 border-b border-zinc-800 sticky top-0 z-40">
         <div className="max-w-2xl mx-auto px-4 h-14 flex items-center justify-between">
           <a href="/dj/dashboard" className="text-zinc-400 hover:text-white text-sm transition">← Dashboard</a>
