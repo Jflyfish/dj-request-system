@@ -10,6 +10,8 @@ const createSchema = z.object({
   message: z.string().max(300).optional(),
   tipCents: z.number().int().min(0).default(0),
   stripePaymentId: z.string().optional(),
+  bpm: z.number().int().optional(),
+  musicalKey: z.string().optional(),
 });
 
 export async function GET(

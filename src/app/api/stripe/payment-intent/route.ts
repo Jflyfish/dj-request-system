@@ -11,6 +11,8 @@ const schema = z.object({
     albumArt: z.string().optional(),
     requesterName: z.string().optional(),
     message: z.string().optional(),
+    bpm: z.number().int().optional(),
+    musicalKey: z.string().optional(),
   }),
   tipCents: z.number().int().min(100),
 });

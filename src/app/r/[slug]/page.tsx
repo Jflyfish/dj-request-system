@@ -98,6 +98,8 @@ export default function RequesterPage({ params }: { params: { slug: string } }) 
   const [requestId, setRequestId] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [eventId, setEventId] = useState('');
+  const [bpm, setBpm] = useState<number | null>(null);
+  const [musicalKey, setMusicalKey] = useState<string | null>(null);
   const searchRef = useRef<ReturnType<typeof setTimeout>>();
 
   // Load event by DJ slug
@@ -154,6 +156,15 @@ export default function RequesterPage({ params }: { params: { slug: string } }) 
     setResults([]);
     setQuery('');
     setStep('tip');
+    setBpm(null);
+    setMusicalKey(null);
+    fetch(`/api/spotify/audio-features?title=${encodeURIComponent(track.trackName)}&artist=${encodeURIComponent(track.artistName)}`)
+      .then(r => r.json())
+      .then(data => {
+        if (data.bpm) setBpm(data.bpm);
+        if (data.musicalKey) setMusicalKey(data.musicalKey);
+      })
+      .catch(() => {});
   }
 
   const activeTip = customTip ? Math.round(parseFloat(customTip) * 100) : tipCents;
@@ -177,6 +188,8 @@ export default function RequesterPage({ params }: { params: { slug: string } }) 
             albumArt: selected.artworkUrl100,
             requesterName: requesterName || undefined,
             message: message || undefined,
+            bpm: bpm ?? undefined,
+            musicalKey: musicalKey ?? undefined,
           },
         }),
       });
@@ -200,6 +213,8 @@ export default function RequesterPage({ params }: { params: { slug: string } }) 
           requesterName: requesterName || undefined,
           message: message || undefined,
           tipCents: 0,
+          bpm: bpm ?? undefined,
+          musicalKey: musicalKey ?? undefined,
         }),
       });
       handleSuccess();

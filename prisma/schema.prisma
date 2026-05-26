@@ -96,6 +96,8 @@ model SongRequest {
   requesterName   String?
   message         String?
   tipCents        Int           @default(0)
+  bpm             Int?
+  musicalKey      String?
   status          RequestStatus @default(PENDING)
   position        Int           @default(0)
   stripePaymentId String?

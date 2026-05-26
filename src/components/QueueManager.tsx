@@ -28,6 +28,8 @@ interface SongRequest {
   requesterName?: string | null;
   message?: string | null;
   tipCents: number;
+  bpm?: number | null;
+  musicalKey?: string | null;
   status: string;
   createdAt: string | Date;
 }
@@ -74,6 +76,19 @@ function RequestCard({
       <div className="flex-1 min-w-0">
         <p className="text-white text-sm font-medium truncate">{request.songTitle}</p>
         <p className="text-zinc-400 text-xs truncate">{request.artistName}</p>
+        {(request.bpm || request.musicalKey) && (
+          <div className="flex items-center gap-2 mt-0.5">
+            {request.bpm && (
+              <span className="text-zinc-500 text-xs">{request.bpm} BPM</span>
+            )}
+            {request.bpm && request.musicalKey && (
+              <span className="text-zinc-700 text-xs">·</span>
+            )}
+            {request.musicalKey && (
+              <span className="text-zinc-500 text-xs">{request.musicalKey}</span>
+            )}
+          </div>
+        )}
         {request.requesterName && (
           <p className="text-zinc-500 text-xs">from {request.requesterName}</p>
         )}
