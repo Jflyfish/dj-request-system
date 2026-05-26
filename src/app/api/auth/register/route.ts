@@ -18,6 +18,8 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: parsed.error.flatten().fieldErrors }, { status: 400 });
   }
 
+  try {
+
   const { name, email, password, displayName, slug } = parsed.data;
 
   const existing = await prisma.user.findUnique({ where: { email } });
@@ -43,5 +45,10 @@ export async function POST(req: NextRequest) {
     },
   });
 
-  return NextResponse.json({ ok: true }, { status: 201 });
+    return NextResponse.json({ ok: true }, { status: 201 });
+  } catch (err) {
+    console.error('REGISTER ERROR:', err);
+    const message = err instanceof Error ? err.message : String(err);
+    return NextResponse.json({ error: message }, { status: 500 });
+  }
 }
